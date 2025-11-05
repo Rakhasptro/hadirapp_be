@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -16,8 +16,43 @@ export class AdminController {
   }
 
   @Get('users')
-  async getUsers() {
-    return this.adminService.getAllUsers();
+  async getUsers(@Query('role') role?: string, @Query('isActive') isActive?: string) {
+    return this.adminService.getAllUsers(role, isActive);
+  }
+
+  @Get('users/stats')
+  async getUsersStats() {
+    return this.adminService.getUsersStats();
+  }
+
+  @Get('users/:id')
+  async getUserById(@Param('id') id: string) {
+    return this.adminService.getUserById(id);
+  }
+
+  @Post('users')
+  async createUser(@Body() data: any) {
+    return this.adminService.createUser(data);
+  }
+
+  @Put('users/:id')
+  async updateUser(@Param('id') id: string, @Body() data: any) {
+    return this.adminService.updateUser(id, data);
+  }
+
+  @Patch('users/:id/status')
+  async toggleUserStatus(@Param('id') id: string) {
+    return this.adminService.toggleUserStatus(id);
+  }
+
+  @Patch('users/:id/password')
+  async resetPassword(@Param('id') id: string, @Body() data: { newPassword: string }) {
+    return this.adminService.resetPassword(id, data.newPassword);
+  }
+
+  @Delete('users/:id')
+  async deleteUser(@Param('id') id: string) {
+    return this.adminService.deleteUser(id);
   }
 
   @Get('classes')

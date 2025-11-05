@@ -165,13 +165,334 @@ export class AdminService {
   }
 
   // 👥 Daftar Semua User
-  async getAllUsers() {
+  async getAllUsers(role?: string, isActive?: string) {
+    const where: any = {};
+    
+    if (role) {
+      where.role = role;
+    }
+    
+    if (isActive !== undefined) {
+      where.isActive = isActive === 'true';
+    }
+
     return this.prisma.users.findMany({
+      where,
+      include: {
+        students: {
+          select: {
+            id: true,
+            name: true,
+            nis: true,
+            classId: true,
+            classes: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        teachers: {
+          select: {
+            id: true,
+            name: true,
+            nip: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  // 📊 Statistik Users
+  async getUsersStats() {
+    const [total, admins, teachers, students, active, inactive] = await Promise.all([
+      this.prisma.users.count(),
+      this.prisma.users.count({ where: { role: 'ADMIN' } }),
+      this.prisma.users.count({ where: { role: 'TEACHER' } }),
+      this.prisma.users.count({ where: { role: 'STUDENT' } }),
+      this.prisma.users.count({ where: { isActive: true } }),
+      this.prisma.users.count({ where: { isActive: false } }),
+    ]);
+
+    return {
+      total,
+      byRole: {
+        admins,
+        teachers,
+        students,
+      },
+      byStatus: {
+        active,
+        inactive,
+      },
+    };
+  }
+
+  // 👤 Get User By ID
+  async getUserById(id: string) {
+    const user = await this.prisma.users.findUnique({
+      where: { id },
+      include: {
+        students: {
+          include: {
+            classes: true,
+          },
+        },
+        teachers: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error('User tidak ditemukan');
+    }
+
+    // Don't send password to client
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
+  // ➕ Create User
+  async createUser(data: any) {
+    const { email, password, role, name, nis, nip, classId, phone, address } = data;
+
+    // Validasi
+    if (!email || !password || !role) {
+      throw new Error('Email, password, dan role harus diisi');
+    }
+
+    // Check if email already exists
+    const existingUser = await this.prisma.users.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new Error('Email sudah digunakan');
+    }
+
+    // Hash password
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await this.prisma.users.create({
+      data: {
+        id: this.generateId(),
+        email,
+        password: hashedPassword,
+        role,
+        isActive: true,
+        updatedAt: new Date(),
+      },
+    });
+
+    // Create related profile based on role
+    if (role === 'STUDENT' && name && nis) {
+      await this.prisma.students.create({
+        data: {
+          id: this.generateId(),
+          userId: user.id,
+          nis,
+          name,
+          phone: phone || null,
+          address: address || null,
+          classId: classId || null,
+          updatedAt: new Date(),
+        },
+      });
+    } else if (role === 'TEACHER' && name && nip) {
+      await this.prisma.teachers.create({
+        data: {
+          id: this.generateId(),
+          userId: user.id,
+          nip,
+          name,
+          phone: phone || null,
+          updatedAt: new Date(),
+        },
+      });
+    }
+
+    return { message: 'User berhasil dibuat', userId: user.id };
+  }
+
+  // ✏️ Update User
+  async updateUser(id: string, data: any) {
+    const user = await this.prisma.users.findUnique({
+      where: { id },
       include: {
         students: true,
         teachers: true,
       },
     });
+
+    if (!user) {
+      throw new Error('User tidak ditemukan');
+    }
+
+    const { email, role, name, nis, nip, classId, phone, address } = data;
+
+    // Check if email is being changed and if it's already taken
+    if (email && email !== user.email) {
+      const existingUser = await this.prisma.users.findUnique({
+        where: { email },
+      });
+      if (existingUser) {
+        throw new Error('Email sudah digunakan');
+      }
+    }
+
+    // Update user
+    const updateData: any = {
+      updatedAt: new Date(),
+    };
+
+    if (email) updateData.email = email;
+    if (role) updateData.role = role;
+
+    await this.prisma.users.update({
+      where: { id },
+      data: updateData,
+    });
+
+    // Update related profile
+    if (user.students && name !== undefined) {
+      const studentUpdate: any = {
+        updatedAt: new Date(),
+      };
+      if (name) studentUpdate.name = name;
+      if (nis) studentUpdate.nis = nis;
+      if (classId !== undefined) studentUpdate.classId = classId;
+      if (phone !== undefined) studentUpdate.phone = phone;
+      if (address !== undefined) studentUpdate.address = address;
+
+      await this.prisma.students.update({
+        where: { id: user.students.id },
+        data: studentUpdate,
+      });
+    } else if (user.teachers && name !== undefined) {
+      const teacherUpdate: any = {
+        updatedAt: new Date(),
+      };
+      if (name) teacherUpdate.name = name;
+      if (nip) teacherUpdate.nip = nip;
+      if (phone !== undefined) teacherUpdate.phone = phone;
+
+      await this.prisma.teachers.update({
+        where: { id: user.teachers.id },
+        data: teacherUpdate,
+      });
+    }
+
+    return { message: 'User berhasil diperbarui' };
+  }
+
+  // 🔄 Toggle User Status
+  async toggleUserStatus(id: string) {
+    const user = await this.prisma.users.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new Error('User tidak ditemukan');
+    }
+
+    const updated = await this.prisma.users.update({
+      where: { id },
+      data: {
+        isActive: !user.isActive,
+        updatedAt: new Date(),
+      },
+    });
+
+    return {
+      message: `User ${updated.isActive ? 'diaktifkan' : 'dinonaktifkan'}`,
+      isActive: updated.isActive,
+    };
+  }
+
+  // 🔑 Reset Password
+  async resetPassword(id: string, newPassword: string) {
+    const user = await this.prisma.users.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new Error('User tidak ditemukan');
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error('Password minimal 6 karakter');
+    }
+
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.users.update({
+      where: { id },
+      data: {
+        password: hashedPassword,
+        updatedAt: new Date(),
+      },
+    });
+
+    return { message: 'Password berhasil direset' };
+  }
+
+  // 🗑️ Delete User
+  async deleteUser(id: string) {
+    const user = await this.prisma.users.findUnique({
+      where: { id },
+      include: {
+        students: {
+          include: {
+            attendances: true,
+            leave_requests: true,
+          },
+        },
+        teachers: {
+          include: {
+            schedules: true,
+            courses: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new Error('User tidak ditemukan');
+    }
+
+    // Check if user has related data
+    if (user.students) {
+      if (user.students.attendances.length > 0) {
+        throw new Error(
+          'Tidak dapat menghapus user yang memiliki riwayat kehadiran. Nonaktifkan user sebagai gantinya.',
+        );
+      }
+      if (user.students.leave_requests.length > 0) {
+        throw new Error(
+          'Tidak dapat menghapus user yang memiliki riwayat izin. Nonaktifkan user sebagai gantinya.',
+        );
+      }
+    }
+
+    if (user.teachers) {
+      if (user.teachers.schedules.length > 0 || user.teachers.courses.length > 0) {
+        throw new Error(
+          'Tidak dapat menghapus guru yang memiliki jadwal atau mata pelajaran. Nonaktifkan user sebagai gantinya.',
+        );
+      }
+    }
+
+    // Safe to delete
+    await this.prisma.users.delete({
+      where: { id },
+    });
+
+    return { message: 'User berhasil dihapus' };
   }
 
   // 🏫 Daftar Semua Kelas
