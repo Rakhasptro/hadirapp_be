@@ -55,10 +55,47 @@ export class AdminController {
     return this.adminService.deleteUser(id);
   }
 
+  // ==================== CLASSES MANAGEMENT ====================
+
   @Get('classes')
-  async getClasses() {
-    return this.adminService.getAllClasses();
+  async getClasses(
+    @Query('grade') grade?: string,
+    @Query('major') major?: string,
+  ) {
+    return this.adminService.getAllClasses(grade, major);
   }
+
+  @Get('classes/stats')
+  async getClassesStats() {
+    return this.adminService.getClassesStats();
+  }
+
+  @Get('classes/:id')
+  async getClassById(@Param('id') id: string) {
+    return this.adminService.getClassById(id);
+  }
+
+  @Post('classes')
+  async createClass(
+    @Body() data: { name: string; grade: string; major?: string; capacity?: number },
+  ) {
+    return this.adminService.createClass(data);
+  }
+
+  @Put('classes/:id')
+  async updateClass(
+    @Param('id') id: string,
+    @Body() data: { name?: string; grade?: string; major?: string; capacity?: number },
+  ) {
+    return this.adminService.updateClass(id, data);
+  }
+
+  @Delete('classes/:id')
+  async deleteClass(@Param('id') id: string) {
+    return this.adminService.deleteClass(id);
+  }
+
+  // ==================== OTHER ENDPOINTS ====================
 
   @Get('attendance')
   async getAttendanceReport(@Query('classId') classId?: string) {

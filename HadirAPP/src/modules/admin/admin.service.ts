@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -495,12 +495,241 @@ export class AdminService {
     return { message: 'User berhasil dihapus' };
   }
 
-  // 🏫 Daftar Semua Kelas
-  async getAllClasses() {
+  // ==================== CLASSES MANAGEMENT ====================
+
+  // 🏫 Daftar Semua Kelas dengan Filter
+  async getAllClasses(grade?: string, major?: string) {
+    const where: any = {};
+    if (grade) where.grade = grade;
+    if (major) where.major = major;
+
     return this.prisma.classes.findMany({
-      include: { students: true },
+      where,
+      include: {
+        students: {
+          select: {
+            id: true,
+            name: true,
+            nis: true,
+          },
+        },
+        _count: {
+          select: {
+            students: true,
+            schedules: true,
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
     });
   }
+
+  // 📊 Statistik Kelas
+  async getClassesStats() {
+    const classes = await this.prisma.classes.findMany({
+      include: {
+        _count: {
+          select: { students: true },
+        },
+      },
+    });
+
+    const totalClasses = classes.length;
+    const totalStudents = classes.reduce((sum, cls) => sum + cls._count.students, 0);
+    const avgStudentsPerClass = totalClasses > 0 ? Math.round(totalStudents / totalClasses) : 0;
+
+    // Group by grade
+    const byGrade = classes.reduce((acc, cls) => {
+      acc[cls.grade] = (acc[cls.grade] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Group by major
+    const byMajor = classes.reduce((acc, cls) => {
+      const major = cls.major || 'Umum';
+      acc[major] = (acc[major] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      total: totalClasses,
+      totalStudents,
+      avgStudentsPerClass,
+      byGrade,
+      byMajor,
+      classes: classes.map((cls) => ({
+        id: cls.id,
+        name: cls.name,
+        grade: cls.grade,
+        major: cls.major,
+        capacity: cls.capacity,
+        studentCount: cls._count.students,
+        utilization: cls.capacity ? Math.round((cls._count.students / cls.capacity) * 100) : 0,
+      })),
+    };
+  }
+
+  // 🔍 Detail Kelas by ID
+  async getClassById(id: string) {
+    const cls = await this.prisma.classes.findUnique({
+      where: { id },
+      include: {
+        students: {
+          include: {
+            users: {
+              select: {
+                email: true,
+                isActive: true,
+              },
+            },
+          },
+        },
+        schedules: {
+          include: {
+            courses: true,
+            teachers: {
+              include: {
+                users: {
+                  select: {
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            students: true,
+            schedules: true,
+          },
+        },
+      },
+    });
+
+    if (!cls) {
+      throw new NotFoundException('Kelas tidak ditemukan');
+    }
+
+    return cls;
+  }
+
+  // ➕ Tambah Kelas Baru
+  async createClass(data: {
+    name: string;
+    grade: string;
+    major?: string;
+    capacity?: number;
+  }) {
+    // Validasi nama kelas unik
+    const existing = await this.prisma.classes.findUnique({
+      where: { name: data.name },
+    });
+
+    if (existing) {
+      throw new BadRequestException('Nama kelas sudah digunakan');
+    }
+
+    return this.prisma.classes.create({
+      data: {
+        id: require('uuid').v4(),
+        name: data.name,
+        grade: data.grade,
+        major: data.major || null,
+        capacity: data.capacity || 40,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      include: {
+        _count: {
+          select: {
+            students: true,
+            schedules: true,
+          },
+        },
+      },
+    });
+  }
+
+  // ✏️ Update Kelas
+  async updateClass(
+    id: string,
+    data: {
+      name?: string;
+      grade?: string;
+      major?: string;
+      capacity?: number;
+    },
+  ) {
+    const cls = await this.prisma.classes.findUnique({ where: { id } });
+
+    if (!cls) {
+      throw new NotFoundException('Kelas tidak ditemukan');
+    }
+
+    // Validasi nama kelas unik (jika diubah)
+    if (data.name && data.name !== cls.name) {
+      const existing = await this.prisma.classes.findUnique({
+        where: { name: data.name },
+      });
+
+      if (existing) {
+        throw new BadRequestException('Nama kelas sudah digunakan');
+      }
+    }
+
+    return this.prisma.classes.update({
+      where: { id },
+      data,
+      include: {
+        _count: {
+          select: {
+            students: true,
+            schedules: true,
+          },
+        },
+      },
+    });
+  }
+
+  // ❌ Hapus Kelas
+  async deleteClass(id: string) {
+    const cls = await this.prisma.classes.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            students: true,
+            schedules: true,
+          },
+        },
+      },
+    });
+
+    if (!cls) {
+      throw new NotFoundException('Kelas tidak ditemukan');
+    }
+
+    // Validasi: tidak boleh hapus jika masih ada siswa
+    if (cls._count.students > 0) {
+      throw new BadRequestException(
+        `Tidak dapat menghapus kelas. Masih ada ${cls._count.students} siswa di kelas ini`,
+      );
+    }
+
+    // Validasi: tidak boleh hapus jika masih ada jadwal
+    if (cls._count.schedules > 0) {
+      throw new BadRequestException(
+        `Tidak dapat menghapus kelas. Masih ada ${cls._count.schedules} jadwal terkait`,
+      );
+    }
+
+    await this.prisma.classes.delete({ where: { id } });
+
+    return { message: 'Kelas berhasil dihapus' };
+  }
+
+  // ==================== OTHER SERVICES ====================
 
   // 📋 Laporan Absensi
   async getAttendanceReport(classId?: string) {

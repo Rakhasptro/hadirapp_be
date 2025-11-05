@@ -156,7 +156,7 @@ export function MainLayout() {
                   </SidebarMenuItem>
                   
                   <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Classes">
+                    <SidebarMenuButton tooltip="Classes" onClick={() => navigate('/classes')}>
                       <BookOpen className="size-4" />
                       <span>Kelas</span>
                     </SidebarMenuButton>
