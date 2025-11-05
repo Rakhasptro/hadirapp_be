@@ -142,7 +142,7 @@ export function MainLayout() {
                 <SidebarGroupLabel>Manajemen</SidebarGroupLabel>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Users">
+                    <SidebarMenuButton tooltip="Users" onClick={() => navigate('/users')}>
                       <Users className="size-4" />
                       <span>Pengguna</span>
                     </SidebarMenuButton>

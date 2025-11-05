@@ -6,6 +6,9 @@ import AttendanceSessionsPage from '@/pages/attendance-sessions-page';
 import SessionDetailPage from '@/pages/session-detail-page';
 import SchedulesPage from '@/pages/schedules-page';
 import ScheduleFormPage from '@/pages/schedule-form-page';
+import UsersPage from '@/pages/users-page';
+import UserFormPage from '@/pages/user-form-page';
+import ResetPasswordPage from '@/pages/reset-password-page';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { MainLayout } from '@/components/layout/main-layout';
 import { authService } from '@/lib/auth';
@@ -51,6 +54,12 @@ export function AppRouter() {
           <Route path="/schedules" element={<SchedulesPage />} />
           <Route path="/schedules/create" element={<ScheduleFormPage />} />
           <Route path="/schedules/edit/:id" element={<ScheduleFormPage />} />
+          
+          {/* Users Management */}
+          <Route path="/users" element={<UsersPage />} />
+          <Route path="/users/create" element={<UserFormPage />} />
+          <Route path="/users/edit/:id" element={<UserFormPage />} />
+          <Route path="/users/:id/reset-password" element={<ResetPasswordPage />} />
         </Route>
         
         {/* Legacy routes - redirect to unified dashboard */}
