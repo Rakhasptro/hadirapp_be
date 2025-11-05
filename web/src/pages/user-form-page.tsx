@@ -280,14 +280,13 @@ export default function UserFormPage() {
                   <div className="space-y-2">
                     <Label htmlFor="classId">Kelas</Label>
                     <Select
-                      value={formData.classId}
+                      value={formData.classId || undefined}
                       onValueChange={(value) => setFormData({ ...formData, classId: value })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Pilih kelas" />
+                        <SelectValue placeholder="Pilih kelas (opsional)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Tidak ada kelas</SelectItem>
                         {classes.map((cls) => (
                           <SelectItem key={cls.id} value={cls.id}>
                             {cls.name}
