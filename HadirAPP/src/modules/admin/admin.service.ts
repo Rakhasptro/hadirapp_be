@@ -498,14 +498,22 @@ export class AdminService {
   // ==================== CLASSES MANAGEMENT ====================
 
   // 🏫 Daftar Semua Kelas dengan Filter
-  async getAllClasses(semester?: string, course?: string) {
+  async getAllClasses(semester?: string, courseId?: string) {
     const where: any = {};
     if (semester) where.semester = semester;
-    if (course) where.course = course;
+    if (courseId) where.courseId = courseId;
 
     return this.prisma.classes.findMany({
       where,
       include: {
+        courses: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            credits: true,
+          },
+        },
         students: {
           select: {
             id: true,
@@ -528,6 +536,12 @@ export class AdminService {
   async getClassesStats() {
     const classes = await this.prisma.classes.findMany({
       include: {
+        courses: {
+          select: {
+            code: true,
+            name: true,
+          },
+        },
         _count: {
           select: { students: true },
         },
@@ -546,8 +560,8 @@ export class AdminService {
 
     // Group by course
     const byCourse = classes.reduce((acc, cls) => {
-      const course = cls.course || 'Umum';
-      acc[course] = (acc[course] || 0) + 1;
+      const courseName = cls.courses?.name || 'Tidak ada mata kuliah';
+      acc[courseName] = (acc[courseName] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
@@ -561,7 +575,8 @@ export class AdminService {
         id: cls.id,
         name: cls.name,
         semester: cls.semester,
-        course: cls.course,
+        courseCode: cls.courses?.code,
+        courseName: cls.courses?.name,
         capacity: cls.capacity,
         studentCount: cls._count.students,
         utilization: cls.capacity ? Math.round((cls._count.students / cls.capacity) * 100) : 0,
@@ -574,6 +589,15 @@ export class AdminService {
     const cls = await this.prisma.classes.findUnique({
       where: { id },
       include: {
+        courses: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            credits: true,
+            description: true,
+          },
+        },
         students: {
           include: {
             users: {
@@ -616,31 +640,50 @@ export class AdminService {
 
   // ➕ Tambah Kelas Baru
   async createClass(data: {
-    name: string;
+    courseId: string;
     semester: string;
-    course?: string;
     capacity?: number;
   }) {
+    // Validasi apakah course ada
+    const course = await this.prisma.courses.findUnique({
+      where: { id: data.courseId },
+    });
+
+    if (!course) {
+      throw new NotFoundException('Mata kuliah tidak ditemukan');
+    }
+
+    // Nama kelas otomatis dari kode mata kuliah
+    const className = course.code;
+
     // Validasi nama kelas unik
     const existing = await this.prisma.classes.findUnique({
-      where: { name: data.name },
+      where: { name: className },
     });
 
     if (existing) {
-      throw new BadRequestException('Nama kelas sudah digunakan');
+      throw new BadRequestException(`Kelas dengan nama ${className} sudah ada`);
     }
 
     return this.prisma.classes.create({
       data: {
         id: require('uuid').v4(),
-        name: data.name,
+        name: className,
         semester: data.semester,
-        course: data.course || null,
+        courseId: data.courseId,
         capacity: data.capacity || 40,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       include: {
+        courses: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            credits: true,
+          },
+        },
         _count: {
           select: {
             students: true,
@@ -655,33 +698,71 @@ export class AdminService {
   async updateClass(
     id: string,
     data: {
-      name?: string;
+      courseId?: string;
       semester?: string;
-      course?: string;
       capacity?: number;
     },
   ) {
-    const cls = await this.prisma.classes.findUnique({ where: { id } });
+    const cls = await this.prisma.classes.findUnique({ 
+      where: { id },
+      include: {
+        courses: true,
+      },
+    });
 
     if (!cls) {
       throw new NotFoundException('Kelas tidak ditemukan');
     }
 
-    // Validasi nama kelas unik (jika diubah)
-    if (data.name && data.name !== cls.name) {
-      const existing = await this.prisma.classes.findUnique({
-        where: { name: data.name },
+    // Jika courseId diubah, validasi dan update nama kelas
+    let updateData: any = {
+      updatedAt: new Date(),
+    };
+
+    if (data.courseId && data.courseId !== cls.courseId) {
+      const course = await this.prisma.courses.findUnique({
+        where: { id: data.courseId },
       });
 
-      if (existing) {
-        throw new BadRequestException('Nama kelas sudah digunakan');
+      if (!course) {
+        throw new NotFoundException('Mata kuliah tidak ditemukan');
       }
+
+      const newClassName = course.code;
+
+      // Validasi nama kelas baru tidak duplikat
+      const existing = await this.prisma.classes.findUnique({
+        where: { name: newClassName },
+      });
+
+      if (existing && existing.id !== id) {
+        throw new BadRequestException(`Kelas dengan nama ${newClassName} sudah ada`);
+      }
+
+      updateData.name = newClassName;
+      updateData.courseId = data.courseId;
+    }
+
+    if (data.semester) {
+      updateData.semester = data.semester;
+    }
+
+    if (data.capacity !== undefined) {
+      updateData.capacity = data.capacity;
     }
 
     return this.prisma.classes.update({
       where: { id },
-      data,
+      data: updateData,
       include: {
+        courses: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            credits: true,
+          },
+        },
         _count: {
           select: {
             students: true,
@@ -947,7 +1028,12 @@ export class AdminService {
             id: true,
             name: true,
             semester: true,
-            course: true,
+            courses: {
+              select: {
+                code: true,
+                name: true,
+              },
+            },
           },
         },
         wifi_networks: {
@@ -1266,7 +1352,12 @@ export class AdminService {
         id: true,
         name: true,
         semester: true,
-        course: true,
+        courses: {
+          select: {
+            code: true,
+            name: true,
+          },
+        },
       },
       orderBy: { name: 'asc' },
     });

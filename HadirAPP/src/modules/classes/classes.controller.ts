@@ -21,12 +21,12 @@ export class ClassesController {
   }
 
   @Post()
-  create(@Body() data: { name: string; semester: string; course?: string; capacity?: number }) {
+  create(@Body() data: { courseId: string; semester: string; capacity?: number }) {
     return this.classesService.create(data);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() data: any) {
+  update(@Param('id') id: string, @Body() data: { courseId?: string; semester?: string; capacity?: number }) {
     return this.classesService.update(id, data);
   }
 

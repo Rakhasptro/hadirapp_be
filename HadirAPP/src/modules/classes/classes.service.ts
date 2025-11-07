@@ -10,6 +10,14 @@ export class ClassesService {
   async findAll() {
     return this.prisma.classes.findMany({
       include: {
+        courses: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            credits: true,
+          },
+        },
         students: true,
         schedules: true,
       },
@@ -22,6 +30,14 @@ export class ClassesService {
     const cls = await this.prisma.classes.findUnique({
       where: { id },
       include: {
+        courses: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            credits: true,
+          },
+        },
         students: true,
         schedules: {
           include: {
@@ -37,39 +53,116 @@ export class ClassesService {
   }
 
   // ➕ Tambah kelas baru
-  async create(data: { name: string; semester: string; course?: string; capacity?: number }) {
+  async create(data: { courseId: string; semester: string; capacity?: number }) {
     try {
+      // Validasi apakah course ada
+      const course = await this.prisma.courses.findUnique({
+        where: { id: data.courseId },
+      });
+
+      if (!course) {
+        throw new NotFoundException('Mata kuliah tidak ditemukan');
+      }
+
+      // Nama kelas otomatis dari kode mata kuliah
+      const className = course.code;
+
       // Validasi duplikat nama kelas
-      const existing = await this.prisma.classes.findUnique({ where: { name: data.name } });
-      if (existing) throw new BadRequestException('Nama kelas sudah digunakan');
+      const existing = await this.prisma.classes.findUnique({ where: { name: className } });
+      if (existing) {
+        throw new BadRequestException(`Kelas dengan nama ${className} sudah ada`);
+      }
 
       return this.prisma.classes.create({
         data: {
           id: uuidv4(),
-          name: data.name,
+          name: className,
           semester: data.semester,
-          course: data.course || null,
+          courseId: data.courseId,
           capacity: data.capacity ?? 40,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
+        include: {
+          courses: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              credits: true,
+            },
+          },
+        },
       });
     } catch (error) {
       console.error('Error creating class:', error);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
       throw new BadRequestException('Gagal membuat kelas');
     }
   }
 
   // ✏️ Update kelas
-  async update(id: string, data: { name?: string; semester?: string; course?: string; capacity?: number }) {
-    const cls = await this.prisma.classes.findUnique({ where: { id } });
+  async update(id: string, data: { courseId?: string; semester?: string; capacity?: number }) {
+    const cls = await this.prisma.classes.findUnique({ 
+      where: { id },
+      include: {
+        courses: true,
+      },
+    });
+    
     if (!cls) throw new NotFoundException('Kelas tidak ditemukan');
+
+    let updateData: any = {
+      updatedAt: new Date(),
+    };
+
+    // Jika courseId diubah, update nama kelas juga
+    if (data.courseId && data.courseId !== cls.courseId) {
+      const course = await this.prisma.courses.findUnique({
+        where: { id: data.courseId },
+      });
+
+      if (!course) {
+        throw new NotFoundException('Mata kuliah tidak ditemukan');
+      }
+
+      const newClassName = course.code;
+
+      // Validasi nama kelas baru tidak duplikat
+      const existing = await this.prisma.classes.findUnique({
+        where: { name: newClassName },
+      });
+
+      if (existing && existing.id !== id) {
+        throw new BadRequestException(`Kelas dengan nama ${newClassName} sudah ada`);
+      }
+
+      updateData.name = newClassName;
+      updateData.courseId = data.courseId;
+    }
+
+    if (data.semester) {
+      updateData.semester = data.semester;
+    }
+
+    if (data.capacity !== undefined) {
+      updateData.capacity = data.capacity;
+    }
 
     return this.prisma.classes.update({
       where: { id },
-      data: {
-        ...data,
-        updatedAt: new Date(),
+      data: updateData,
+      include: {
+        courses: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            credits: true,
+          },
+        },
       },
     });
   }
