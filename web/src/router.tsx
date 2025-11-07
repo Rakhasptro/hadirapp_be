@@ -11,6 +11,8 @@ import UserFormPage from '@/pages/user-form-page';
 import ResetPasswordPage from '@/pages/reset-password-page';
 import ClassesPage from '@/pages/classes-page';
 import ClassFormPage from '@/pages/class-form-page';
+import CoursesPage from '@/pages/courses-page';
+import CourseFormPage from '@/pages/course-form-page';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { MainLayout } from '@/components/layout/main-layout';
 import { authService } from '@/lib/auth';
@@ -67,6 +69,11 @@ export function AppRouter() {
           <Route path="/classes" element={<ClassesPage />} />
           <Route path="/classes/create" element={<ClassFormPage />} />
           <Route path="/classes/edit/:id" element={<ClassFormPage />} />
+          
+          {/* Courses Management */}
+          <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/courses/new" element={<CourseFormPage />} />
+          <Route path="/courses/:id" element={<CourseFormPage />} />
         </Route>
         
         {/* Legacy routes - redirect to unified dashboard */}

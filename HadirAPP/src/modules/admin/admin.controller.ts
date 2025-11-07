@@ -59,10 +59,10 @@ export class AdminController {
 
   @Get('classes')
   async getClasses(
-    @Query('grade') grade?: string,
-    @Query('major') major?: string,
+    @Query('semester') semester?: string,
+    @Query('course') course?: string,
   ) {
-    return this.adminService.getAllClasses(grade, major);
+    return this.adminService.getAllClasses(semester, course);
   }
 
   @Get('classes/stats')
@@ -77,7 +77,7 @@ export class AdminController {
 
   @Post('classes')
   async createClass(
-    @Body() data: { name: string; grade: string; major?: string; capacity?: number },
+    @Body() data: { name: string; semester: string; course?: string; capacity?: number },
   ) {
     return this.adminService.createClass(data);
   }
@@ -85,7 +85,7 @@ export class AdminController {
   @Put('classes/:id')
   async updateClass(
     @Param('id') id: string,
-    @Body() data: { name?: string; grade?: string; major?: string; capacity?: number },
+    @Body() data: { name?: string; semester?: string; course?: string; capacity?: number },
   ) {
     return this.adminService.updateClass(id, data);
   }

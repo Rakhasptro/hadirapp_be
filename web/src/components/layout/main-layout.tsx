@@ -31,6 +31,7 @@ import {
   Users,
   GraduationCap,
   BookOpen,
+  Library,
   Calendar,
   FileText,
   BellRing,
@@ -163,9 +164,9 @@ export function MainLayout() {
                   </SidebarMenuItem>
                   
                   <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Courses">
-                      <BookOpen className="size-4" />
-                      <span>Mata Pelajaran</span>
+                    <SidebarMenuButton tooltip="Courses" onClick={() => navigate('/courses')}>
+                      <Library className="size-4" />
+                      <span>Mata Kuliah</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>

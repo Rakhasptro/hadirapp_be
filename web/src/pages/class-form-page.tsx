@@ -17,8 +17,8 @@ import apiClient from '@/lib/axios';
 
 interface FormData {
   name: string;
-  grade: string;
-  major: string;
+  semester: string;
+  course: string;
   capacity: number;
 }
 
@@ -31,8 +31,8 @@ export default function ClassFormPage() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: '',
-    grade: '10',
-    major: '',
+    semester: '1',
+    course: '',
     capacity: 40,
   });
 
@@ -50,8 +50,8 @@ export default function ClassFormPage() {
       
       setFormData({
         name: cls.name,
-        grade: cls.grade,
-        major: cls.major || '',
+        semester: cls.semester,
+        course: cls.course || '',
         capacity: cls.capacity,
       });
     } catch (error: any) {
@@ -70,10 +70,10 @@ export default function ClassFormPage() {
     e.preventDefault();
     
     // Validation
-    if (!formData.name || !formData.grade) {
+    if (!formData.name || !formData.semester) {
       toast({
         title: 'Error',
-        description: 'Nama kelas dan tingkat harus diisi',
+        description: 'Nama kelas dan semester harus diisi',
         variant: 'destructive',
       });
       return;
@@ -93,8 +93,8 @@ export default function ClassFormPage() {
       
       const payload = {
         name: formData.name,
-        grade: formData.grade,
-        major: formData.major || null,
+        semester: formData.semester,
+        course: formData.course || null,
         capacity: formData.capacity,
       };
 
@@ -159,38 +159,44 @@ export default function ClassFormPage() {
                 />
               </div>
 
-              {/* Grade */}
+              {/* Semester */}
               <div className="space-y-2">
-                <Label htmlFor="grade">Tingkat *</Label>
+                <Label htmlFor="semester">Semester *</Label>
                 <Select
-                  value={formData.grade}
-                  onValueChange={(value) => setFormData({ ...formData, grade: value })}
+                  value={formData.semester}
+                  onValueChange={(value) => setFormData({ ...formData, semester: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="10">Kelas 10</SelectItem>
-                    <SelectItem value="11">Kelas 11</SelectItem>
-                    <SelectItem value="12">Kelas 12</SelectItem>
+                    <SelectItem value="1">Semester 1</SelectItem>
+                    <SelectItem value="2">Semester 2</SelectItem>
+                    <SelectItem value="3">Semester 3</SelectItem>
+                    <SelectItem value="4">Semester 4</SelectItem>
+                    <SelectItem value="5">Semester 5</SelectItem>
+                    <SelectItem value="6">Semester 6</SelectItem>
+                    <SelectItem value="7">Semester 7</SelectItem>
+                    <SelectItem value="8">Semester 8</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Major */}
+              {/* Course */}
               <div className="space-y-2">
-                <Label htmlFor="major">Jurusan</Label>
+                <Label htmlFor="course">Mata Kuliah</Label>
                 <Select
-                  value={formData.major || undefined}
-                  onValueChange={(value) => setFormData({ ...formData, major: value })}
+                  value={formData.course || undefined}
+                  onValueChange={(value) => setFormData({ ...formData, course: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih jurusan (opsional)" />
+                    <SelectValue placeholder="Pilih mata kuliah (opsional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="IPA">IPA</SelectItem>
-                    <SelectItem value="IPS">IPS</SelectItem>
-                    <SelectItem value="Bahasa">Bahasa</SelectItem>
+                    <SelectItem value="Teknik Informatika">Teknik Informatika</SelectItem>
+                    <SelectItem value="Sistem Informasi">Sistem Informasi</SelectItem>
+                    <SelectItem value="Manajemen">Manajemen</SelectItem>
+                    <SelectItem value="Akuntansi">Akuntansi</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

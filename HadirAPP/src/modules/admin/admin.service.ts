@@ -498,10 +498,10 @@ export class AdminService {
   // ==================== CLASSES MANAGEMENT ====================
 
   // 🏫 Daftar Semua Kelas dengan Filter
-  async getAllClasses(grade?: string, major?: string) {
+  async getAllClasses(semester?: string, course?: string) {
     const where: any = {};
-    if (grade) where.grade = grade;
-    if (major) where.major = major;
+    if (semester) where.semester = semester;
+    if (course) where.course = course;
 
     return this.prisma.classes.findMany({
       where,
@@ -538,16 +538,16 @@ export class AdminService {
     const totalStudents = classes.reduce((sum, cls) => sum + cls._count.students, 0);
     const avgStudentsPerClass = totalClasses > 0 ? Math.round(totalStudents / totalClasses) : 0;
 
-    // Group by grade
-    const byGrade = classes.reduce((acc, cls) => {
-      acc[cls.grade] = (acc[cls.grade] || 0) + 1;
+    // Group by semester
+    const bySemester = classes.reduce((acc, cls) => {
+      acc[cls.semester] = (acc[cls.semester] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    // Group by major
-    const byMajor = classes.reduce((acc, cls) => {
-      const major = cls.major || 'Umum';
-      acc[major] = (acc[major] || 0) + 1;
+    // Group by course
+    const byCourse = classes.reduce((acc, cls) => {
+      const course = cls.course || 'Umum';
+      acc[course] = (acc[course] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
@@ -555,13 +555,13 @@ export class AdminService {
       total: totalClasses,
       totalStudents,
       avgStudentsPerClass,
-      byGrade,
-      byMajor,
+      bySemester,
+      byCourse,
       classes: classes.map((cls) => ({
         id: cls.id,
         name: cls.name,
-        grade: cls.grade,
-        major: cls.major,
+        semester: cls.semester,
+        course: cls.course,
         capacity: cls.capacity,
         studentCount: cls._count.students,
         utilization: cls.capacity ? Math.round((cls._count.students / cls.capacity) * 100) : 0,
@@ -617,8 +617,8 @@ export class AdminService {
   // ➕ Tambah Kelas Baru
   async createClass(data: {
     name: string;
-    grade: string;
-    major?: string;
+    semester: string;
+    course?: string;
     capacity?: number;
   }) {
     // Validasi nama kelas unik
@@ -634,8 +634,8 @@ export class AdminService {
       data: {
         id: require('uuid').v4(),
         name: data.name,
-        grade: data.grade,
-        major: data.major || null,
+        semester: data.semester,
+        course: data.course || null,
         capacity: data.capacity || 40,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -656,8 +656,8 @@ export class AdminService {
     id: string,
     data: {
       name?: string;
-      grade?: string;
-      major?: string;
+      semester?: string;
+      course?: string;
       capacity?: number;
     },
   ) {
@@ -946,8 +946,8 @@ export class AdminService {
           select: {
             id: true,
             name: true,
-            grade: true,
-            major: true,
+            semester: true,
+            course: true,
           },
         },
         wifi_networks: {
@@ -1265,8 +1265,8 @@ export class AdminService {
       select: {
         id: true,
         name: true,
-        grade: true,
-        major: true,
+        semester: true,
+        course: true,
       },
       orderBy: { name: 'asc' },
     });

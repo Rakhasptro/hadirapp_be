@@ -52,8 +52,8 @@ model attendances {
 model classes {
   id        String      @id
   name      String      @unique
-  grade     String
-  major     String?
+  semester  String
+  course    String?
   capacity  Int         @default(40)
   createdAt DateTime    @default(now())
   updatedAt DateTime

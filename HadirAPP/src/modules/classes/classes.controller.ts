@@ -21,7 +21,7 @@ export class ClassesController {
   }
 
   @Post()
-  create(@Body() data: { name: string; grade: string; major?: string; capacity?: number }) {
+  create(@Body() data: { name: string; semester: string; course?: string; capacity?: number }) {
     return this.classesService.create(data);
   }
 

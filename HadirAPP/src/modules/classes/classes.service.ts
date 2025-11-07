@@ -37,7 +37,7 @@ export class ClassesService {
   }
 
   // ➕ Tambah kelas baru
-  async create(data: { name: string; grade: string; major?: string; capacity?: number }) {
+  async create(data: { name: string; semester: string; course?: string; capacity?: number }) {
     try {
       // Validasi duplikat nama kelas
       const existing = await this.prisma.classes.findUnique({ where: { name: data.name } });
@@ -47,8 +47,8 @@ export class ClassesService {
         data: {
           id: uuidv4(),
           name: data.name,
-          grade: data.grade,
-          major: data.major || null,
+          semester: data.semester,
+          course: data.course || null,
           capacity: data.capacity ?? 40,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -61,7 +61,7 @@ export class ClassesService {
   }
 
   // ✏️ Update kelas
-  async update(id: string, data: { name?: string; grade?: string; major?: string; capacity?: number }) {
+  async update(id: string, data: { name?: string; semester?: string; course?: string; capacity?: number }) {
     const cls = await this.prisma.classes.findUnique({ where: { id } });
     if (!cls) throw new NotFoundException('Kelas tidak ditemukan');
 

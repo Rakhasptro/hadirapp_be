@@ -42,8 +42,8 @@ import apiClient from '@/lib/axios';
 interface Class {
   id: string;
   name: string;
-  grade: string;
-  major: string | null;
+  semester: string;
+  course: string | null;
   capacity: number;
   _count: {
     students: number;
@@ -55,8 +55,8 @@ interface Stats {
   total: number;
   totalStudents: number;
   avgStudentsPerClass: number;
-  byGrade: Record<string, number>;
-  byMajor: Record<string, number>;
+  bySemester: Record<string, number>;
+  byCourse: Record<string, number>;
 }
 
 export default function ClassesPage() {
@@ -67,22 +67,22 @@ export default function ClassesPage() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [gradeFilter, setGradeFilter] = useState<string>('');
-  const [majorFilter, setMajorFilter] = useState<string>('');
+  const [semesterFilter, setSemesterFilter] = useState<string>('');
+  const [courseFilter, setCourseFilter] = useState<string>('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [classToDelete, setClassToDelete] = useState<Class | null>(null);
 
   useEffect(() => {
     fetchClasses();
     fetchStats();
-  }, [gradeFilter, majorFilter]);
+  }, [semesterFilter, courseFilter]);
 
   const fetchClasses = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (gradeFilter) params.append('grade', gradeFilter);
-      if (majorFilter) params.append('major', majorFilter);
+      if (semesterFilter) params.append('semester', semesterFilter);
+      if (courseFilter) params.append('course', courseFilter);
       
       const response = await apiClient.get(`/admin/classes?${params}`);
       setClasses(response.data);
@@ -138,8 +138,8 @@ export default function ClassesPage() {
   const filteredClasses = classes.filter((cls) => {
     const matchSearch = 
       cls.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cls.grade.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (cls.major && cls.major.toLowerCase().includes(searchQuery.toLowerCase()));
+      cls.semester.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (cls.course && cls.course.toLowerCase().includes(searchQuery.toLowerCase()));
     
     return matchSearch;
   });
@@ -205,14 +205,14 @@ export default function ClassesPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tingkat</CardTitle>
+              <CardTitle className="text-sm font-medium">Semester</CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-sm">
-                {Object.entries(stats.byGrade).map(([grade, count]) => (
-                  <div key={grade} className="flex justify-between">
-                    <span>Kelas {grade}</span>
+                {Object.entries(stats.bySemester).map(([semester, count]) => (
+                  <div key={semester} className="flex justify-between">
+                    <span>Semester {semester}</span>
                     <span className="font-semibold">{count}</span>
                   </div>
                 ))}
@@ -239,27 +239,33 @@ export default function ClassesPage() {
               />
             </div>
 
-            <Select value={gradeFilter} onValueChange={setGradeFilter}>
+            <Select value={semesterFilter} onValueChange={setSemesterFilter}>
               <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Semua Tingkat" />
+                <SelectValue placeholder="Semua Semester" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Tingkat</SelectItem>
-                <SelectItem value="10">Kelas 10</SelectItem>
-                <SelectItem value="11">Kelas 11</SelectItem>
-                <SelectItem value="12">Kelas 12</SelectItem>
+                <SelectItem value="all">Semua Semester</SelectItem>
+                <SelectItem value="1">Semester 1</SelectItem>
+                <SelectItem value="2">Semester 2</SelectItem>
+                <SelectItem value="3">Semester 3</SelectItem>
+                <SelectItem value="4">Semester 4</SelectItem>
+                <SelectItem value="5">Semester 5</SelectItem>
+                <SelectItem value="6">Semester 6</SelectItem>
+                <SelectItem value="7">Semester 7</SelectItem>
+                <SelectItem value="8">Semester 8</SelectItem>
               </SelectContent>
             </Select>
 
-            <Select value={majorFilter} onValueChange={setMajorFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Semua Jurusan" />
+            <Select value={courseFilter} onValueChange={setCourseFilter}>
+              <SelectTrigger className="w-full md:w-[200px]">
+                <SelectValue placeholder="Semua Mata Kuliah" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Jurusan</SelectItem>
-                <SelectItem value="IPA">IPA</SelectItem>
-                <SelectItem value="IPS">IPS</SelectItem>
-                <SelectItem value="Bahasa">Bahasa</SelectItem>
+                <SelectItem value="all">Semua Mata Kuliah</SelectItem>
+                <SelectItem value="Teknik Informatika">Teknik Informatika</SelectItem>
+                <SelectItem value="Sistem Informasi">Sistem Informasi</SelectItem>
+                <SelectItem value="Manajemen">Manajemen</SelectItem>
+                <SelectItem value="Akuntansi">Akuntansi</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -272,8 +278,8 @@ export default function ClassesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nama Kelas</TableHead>
-                    <TableHead>Tingkat</TableHead>
-                    <TableHead>Jurusan</TableHead>
+                    <TableHead>Semester</TableHead>
+                    <TableHead>Mata Kuliah</TableHead>
                     <TableHead className="text-center">Siswa</TableHead>
                     <TableHead className="text-center">Kapasitas</TableHead>
                     <TableHead className="text-center">Utilisasi</TableHead>
@@ -295,11 +301,11 @@ export default function ClassesPage() {
                         <TableRow key={cls.id}>
                           <TableCell className="font-medium">{cls.name}</TableCell>
                           <TableCell>
-                            <Badge variant="outline">Kelas {cls.grade}</Badge>
+                            <Badge variant="outline">Semester {cls.semester}</Badge>
                           </TableCell>
                           <TableCell>
-                            {cls.major ? (
-                              <Badge>{cls.major}</Badge>
+                            {cls.course ? (
+                              <Badge>{cls.course}</Badge>
                             ) : (
                               <span className="text-muted-foreground">-</span>
                             )}
