@@ -43,8 +43,14 @@ interface Class {
   id: string;
   name: string;
   semester: string;
-  course: string | null;
+  courseId: string | null;
   capacity: number;
+  courses?: {
+    id: string;
+    code: string;
+    name: string;
+    credits: number;
+  };
   _count: {
     students: number;
     schedules: number;
@@ -68,21 +74,35 @@ export default function ClassesPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [semesterFilter, setSemesterFilter] = useState<string>('');
-  const [courseFilter, setCourseFilter] = useState<string>('');
+  const [courseIdFilter, setCourseIdFilter] = useState<string>('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [classToDelete, setClassToDelete] = useState<Class | null>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
 
   useEffect(() => {
     fetchClasses();
     fetchStats();
-  }, [semesterFilter, courseFilter]);
+  }, [semesterFilter, courseIdFilter]);
+
+  const fetchCourses = async () => {
+    try {
+      const response = await apiClient.get('/admin/courses/list');
+      setCourses(response.data);
+    } catch (error) {
+      console.error('Failed to fetch courses:', error);
+    }
+  };
 
   const fetchClasses = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
       if (semesterFilter) params.append('semester', semesterFilter);
-      if (courseFilter) params.append('course', courseFilter);
+      if (courseIdFilter) params.append('courseId', courseIdFilter);
       
       const response = await apiClient.get(`/admin/classes?${params}`);
       setClasses(response.data);
@@ -139,7 +159,7 @@ export default function ClassesPage() {
     const matchSearch = 
       cls.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       cls.semester.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (cls.course && cls.course.toLowerCase().includes(searchQuery.toLowerCase()));
+      (cls.courses?.name && cls.courses.name.toLowerCase().includes(searchQuery.toLowerCase()));
     
     return matchSearch;
   });
@@ -256,16 +276,17 @@ export default function ClassesPage() {
               </SelectContent>
             </Select>
 
-            <Select value={courseFilter} onValueChange={setCourseFilter}>
+            <Select value={courseIdFilter} onValueChange={setCourseIdFilter}>
               <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue placeholder="Semua Mata Kuliah" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Mata Kuliah</SelectItem>
-                <SelectItem value="Teknik Informatika">Teknik Informatika</SelectItem>
-                <SelectItem value="Sistem Informasi">Sistem Informasi</SelectItem>
-                <SelectItem value="Manajemen">Manajemen</SelectItem>
-                <SelectItem value="Akuntansi">Akuntansi</SelectItem>
+                {courses.map((course) => (
+                  <SelectItem key={course.id} value={course.id}>
+                    {course.code} - {course.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -304,8 +325,11 @@ export default function ClassesPage() {
                             <Badge variant="outline">Semester {cls.semester}</Badge>
                           </TableCell>
                           <TableCell>
-                            {cls.course ? (
-                              <Badge>{cls.course}</Badge>
+                            {cls.courses ? (
+                              <div>
+                                <div className="font-medium">{cls.courses.name}</div>
+                                <div className="text-sm text-muted-foreground">{cls.courses.code}</div>
+                              </div>
                             ) : (
                               <span className="text-muted-foreground">-</span>
                             )}

@@ -16,10 +16,15 @@ import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/axios';
 
 interface FormData {
-  name: string;
+  courseId: string;
   semester: string;
-  course: string;
   capacity: number;
+}
+
+interface Course {
+  id: string;
+  code: string;
+  name: string;
 }
 
 export default function ClassFormPage() {
@@ -29,18 +34,32 @@ export default function ClassFormPage() {
   const isEditMode = !!id;
 
   const [loading, setLoading] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [formData, setFormData] = useState<FormData>({
-    name: '',
+    courseId: '',
     semester: '1',
-    course: '',
     capacity: 40,
   });
 
   useEffect(() => {
+    fetchCourses();
     if (isEditMode) {
       fetchClassData();
     }
   }, [id]);
+
+  const fetchCourses = async () => {
+    try {
+      const response = await apiClient.get('/admin/courses/list');
+      setCourses(response.data);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Gagal memuat data mata kuliah',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const fetchClassData = async () => {
     try {
@@ -49,9 +68,8 @@ export default function ClassFormPage() {
       const cls = response.data;
       
       setFormData({
-        name: cls.name,
+        courseId: cls.courseId || '',
         semester: cls.semester,
-        course: cls.course || '',
         capacity: cls.capacity,
       });
     } catch (error: any) {
@@ -70,10 +88,10 @@ export default function ClassFormPage() {
     e.preventDefault();
     
     // Validation
-    if (!formData.name || !formData.semester) {
+    if (!formData.courseId || !formData.semester) {
       toast({
         title: 'Error',
-        description: 'Nama kelas dan semester harus diisi',
+        description: 'Mata kuliah dan semester harus diisi',
         variant: 'destructive',
       });
       return;
@@ -92,9 +110,8 @@ export default function ClassFormPage() {
       setLoading(true);
       
       const payload = {
-        name: formData.name,
+        courseId: formData.courseId,
         semester: formData.semester,
-        course: formData.course || null,
         capacity: formData.capacity,
       };
 
@@ -147,16 +164,27 @@ export default function ClassFormPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
-              {/* Name */}
-              <div className="space-y-2">
-                <Label htmlFor="name">Nama Kelas *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Contoh: X-IPA-1"
-                  required
-                />
+              {/* Mata Kuliah */}
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="courseId">Mata Kuliah *</Label>
+                <Select
+                  value={formData.courseId || undefined}
+                  onValueChange={(value) => setFormData({ ...formData, courseId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih mata kuliah" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses.map((course) => (
+                      <SelectItem key={course.id} value={course.id}>
+                        {course.code} - {course.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  Nama kelas akan otomatis menggunakan kode mata kuliah
+                </p>
               </div>
 
               {/* Semester */}
@@ -178,25 +206,6 @@ export default function ClassFormPage() {
                     <SelectItem value="6">Semester 6</SelectItem>
                     <SelectItem value="7">Semester 7</SelectItem>
                     <SelectItem value="8">Semester 8</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Course */}
-              <div className="space-y-2">
-                <Label htmlFor="course">Mata Kuliah</Label>
-                <Select
-                  value={formData.course || undefined}
-                  onValueChange={(value) => setFormData({ ...formData, course: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih mata kuliah (opsional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Teknik Informatika">Teknik Informatika</SelectItem>
-                    <SelectItem value="Sistem Informasi">Sistem Informasi</SelectItem>
-                    <SelectItem value="Manajemen">Manajemen</SelectItem>
-                    <SelectItem value="Akuntansi">Akuntansi</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
