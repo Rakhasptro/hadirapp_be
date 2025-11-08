@@ -52,8 +52,8 @@ interface Class {
     credits: number;
   };
   _count: {
-    students: number;
-    schedules: number;
+      students: number;
+      schedules: number;
   };
 }
 

@@ -197,6 +197,11 @@ export class AdminService {
             id: true,
             name: true,
             nip: true,
+            email: true,
+            gender: true,
+            phone: true,
+            address: true,
+            photo: true,
           },
         },
       },
@@ -256,7 +261,7 @@ export class AdminService {
 
   // ➕ Create User
   async createUser(data: any) {
-    const { email, password, role, name, nis, nip, classId, phone, address } = data;
+    const { email, password, role, name, nis, nip, classId, phone, address, gender, photo } = data;
 
     // Validasi
     if (!email || !password || !role) {
@@ -309,7 +314,11 @@ export class AdminService {
           userId: user.id,
           nip,
           name,
+          email: email || null,
+          gender: gender || null,
           phone: phone || null,
+          address: address || null,
+          photo: photo || null,
           updatedAt: new Date(),
         },
       });
@@ -332,7 +341,18 @@ export class AdminService {
       throw new Error('User tidak ditemukan');
     }
 
-    const { email, role, name, nis, nip, classId, phone, address } = data;
+    const {
+      email,
+      role,
+      name,
+      nis,
+      nip,
+      classId,
+      phone,
+      address,
+      gender,
+      photo,
+    } = data;
 
     // Check if email is being changed and if it's already taken
     if (email && email !== user.email) {
@@ -378,7 +398,11 @@ export class AdminService {
       };
       if (name) teacherUpdate.name = name;
       if (nip) teacherUpdate.nip = nip;
+      if (email !== undefined) teacherUpdate.email = email;
+      if (gender !== undefined) teacherUpdate.gender = gender;
       if (phone !== undefined) teacherUpdate.phone = phone;
+      if (address !== undefined) teacherUpdate.address = address;
+      if (photo !== undefined) teacherUpdate.photo = photo;
 
       await this.prisma.teachers.update({
         where: { id: user.teachers.id },
