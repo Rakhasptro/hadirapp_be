@@ -25,6 +25,8 @@ interface FormData {
   classId?: string;
   phone?: string;
   address?: string;
+  gender?: string;
+  photo?: string;
 }
 
 interface ClassOption {
@@ -50,6 +52,8 @@ export default function UserFormPage() {
     classId: '',
     phone: '',
     address: '',
+    gender: '',
+    photo: '',
   });
 
   useEffect(() => {
@@ -82,7 +86,9 @@ export default function UserFormPage() {
         nip: user.teachers?.nip || '',
         classId: user.students?.classId || '',
         phone: user.students?.phone || user.teachers?.phone || '',
-        address: user.students?.address || '',
+        address: user.students?.address || user.teachers?.address || '',
+        gender: user.teachers?.gender || '',
+        photo: user.teachers?.photo || '',
       });
     } catch (error: any) {
       toast({
@@ -152,6 +158,9 @@ export default function UserFormPage() {
         payload.address = formData.address || null;
       } else if (formData.role === 'TEACHER') {
         payload.nip = formData.nip;
+        payload.gender = formData.gender || null;
+        payload.address = formData.address || null;
+        payload.photo = formData.photo || null;
       }
 
       if (!isEditMode) {
@@ -300,16 +309,44 @@ export default function UserFormPage() {
 
               {/* NIP (for teachers) */}
               {formData.role === 'TEACHER' && (
-                <div className="space-y-2">
-                  <Label htmlFor="nip">NIP *</Label>
-                  <Input
-                    id="nip"
-                    value={formData.nip}
-                    onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
-                    placeholder="Nomor Induk Pegawai"
-                    required
-                  />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="nip">NIP *</Label>
+                    <Input
+                      id="nip"
+                      value={formData.nip}
+                      onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
+                      placeholder="Nomor Induk Pegawai"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="gender">Jenis Kelamin</Label>
+                    <Select
+                      value={formData.gender || undefined}
+                      onValueChange={(value) => setFormData({ ...formData, gender: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih jenis kelamin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="LAKI_LAKI">Laki-laki</SelectItem>
+                        <SelectItem value="PEREMPUAN">Perempuan</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="photo">URL Foto Profil</Label>
+                    <Input
+                      id="photo"
+                      value={formData.photo}
+                      onChange={(e) => setFormData({ ...formData, photo: e.target.value })}
+                      placeholder="https://example.com/photo.jpg"
+                    />
+                  </div>
+                </>
               )}
 
               {/* Phone */}
@@ -327,6 +364,19 @@ export default function UserFormPage() {
 
               {/* Address (for students) */}
               {formData.role === 'STUDENT' && (
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="address">Alamat</Label>
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Alamat lengkap"
+                  />
+                </div>
+              )}
+
+              {/* Address (for teachers) */}
+              {formData.role === 'TEACHER' && (
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="address">Alamat</Label>
                   <Input
