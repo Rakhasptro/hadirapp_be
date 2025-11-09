@@ -14,8 +14,10 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Serve static files
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  // Serve static files from uploads folder
+  // In development: HadirAPP/uploads
+  // __dirname in runtime points to dist/src, so we need to go up twice
+  app.useStaticAssets(join(__dirname, '..', '..', 'uploads'), {
     prefix: '/uploads/',
   });
   

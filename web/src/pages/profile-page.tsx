@@ -213,9 +213,14 @@ export function ProfilePage() {
 
       // Refresh profile data
       await fetchProfile()
-      setEditing(false)
+      
+      // Trigger profile update event for sidebar
+      window.dispatchEvent(new Event('profileUpdated'))
+      
+      // Clear photo upload state
       setPhotoFile(null)
       setPhotoPreview('')
+      setEditing(false)
     } catch (error: any) {
       console.error('Failed to update profile:', error)
       toast({
@@ -515,7 +520,7 @@ export function ProfilePage() {
                         {(photoPreview || formData.photo) && (
                           <div className="relative">
                             <img
-                              src={photoPreview || formData.photo}
+                              src={photoPreview || getPhotoUrl(formData.photo) || ''}
                               alt="Preview"
                               className="w-24 h-24 object-cover rounded-lg border"
                             />

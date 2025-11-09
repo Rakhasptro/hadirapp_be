@@ -71,6 +71,17 @@ export function MainLayout() {
 
   useEffect(() => {
     fetchUserProfile()
+    
+    // Listen for profile updates
+    const handleProfileUpdate = () => {
+      fetchUserProfile()
+    }
+    
+    window.addEventListener('profileUpdated', handleProfileUpdate)
+    
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate)
+    }
   }, [])
 
   const fetchUserProfile = async () => {
