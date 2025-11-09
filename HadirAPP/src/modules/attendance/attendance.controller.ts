@@ -1,53 +1,92 @@
-import { Body, Controller, Get, Param, Post, UseGuards, Req, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AttendanceService } from './attendance.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 @Controller('attendance')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
-  // GURU buka sesi absensi
-  @Post('session')
+  @Post('submit')
+  @UseInterceptors(
+    FileInterceptor('selfie', {
+      storage: diskStorage({
+        destination: './uploads/selfies',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `selfie-${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png)$/)) {
+          return cb(new Error('Only image files are allowed!'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async submitAttendance(
+    @Body() body: { scheduleId: string; studentName: string; studentNpm: string },
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new Error('Selfie image is required');
+    }
+
+    return this.attendanceService.submitAttendance({
+      scheduleId: body.scheduleId,
+      studentName: body.studentName,
+      studentNpm: body.studentNpm,
+      selfieImage: file.path,
+    });
+  }
+
+  @Get('schedule/:scheduleId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('TEACHER')
-  async createSession(
-    @Body() body: { scheduleId: string; description?: string },
-    @Req() req,
-  ) {
-    if (!body || !body.scheduleId) {
-      throw new BadRequestException('scheduleId harus diisi');
+  async getScheduleAttendances(@Request() req, @Param('scheduleId') scheduleId: string) {
+    const teacherId = req.user.teacherId || req.user.profile?.id;
+    if (!teacherId) {
+      throw new Error('Teacher ID not found');
     }
-    const teacherId = req.user.userId;
-    return this.attendanceService.createSession(teacherId, body.scheduleId, body.description);
+    return this.attendanceService.getScheduleAttendances(scheduleId, teacherId);
   }
 
-  // SISWA melakukan absensi
-  @Post('mark')
-  @Roles('STUDENT')
-  async mark(
-    @Body() body: { sessionId: string; status?: string },
-    @Req() req,
-  ) {
-    if (!body || !body.sessionId) {
-      throw new BadRequestException('sessionId harus diisi');
+  @Get('pending')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('TEACHER')
+  async getPendingAttendances(@Request() req) {
+    const teacherId = req.user.teacherId || req.user.profile?.id;
+    if (!teacherId) {
+      throw new Error('Teacher ID not found');
     }
-    const studentId = req.user.userId;
-    return this.attendanceService.markAttendance(studentId, body.sessionId, body.status);
+    return this.attendanceService.getPendingAttendances(teacherId);
   }
 
-  // GURU / ADMIN melihat laporan sesi
-  @Get('session/:id')
-  @Roles('ADMIN', 'TEACHER')
-  async getSession(@Param('id') id: string) {
-    return this.attendanceService.getSessionAttendance(id);
+  @Patch(':id/confirm')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('TEACHER')
+  async confirmAttendance(@Request() req, @Param('id') id: string) {
+    const teacherId = req.user.teacherId || req.user.profile?.id;
+    if (!teacherId) {
+      throw new Error('Teacher ID not found');
+    }
+    return this.attendanceService.confirmAttendance(id, teacherId);
   }
 
-  // Tutup sesi absensi
-  @Post('session/:id/close')
-  @Roles('ADMIN', 'TEACHER')
-  async close(@Param('id') id: string) {
-    return this.attendanceService.closeSession(id);
+  @Patch(':id/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('TEACHER')
+  async rejectAttendance(@Request() req, @Param('id') id: string, @Body('reason') reason: string) {
+    const teacherId = req.user.teacherId || req.user.profile?.id;
+    if (!teacherId) {
+      throw new Error('Teacher ID not found');
+    }
+    return this.attendanceService.rejectAttendance(id, teacherId, reason);
   }
 }

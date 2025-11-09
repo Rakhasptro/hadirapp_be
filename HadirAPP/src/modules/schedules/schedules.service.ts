@@ -1,198 +1,304 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
-import { schedules_dayOfWeek } from '@prisma/client';
+import { course_schedules_status } from '@prisma/client';
+import * as QRCode from 'qrcode';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class SchedulesService {
   constructor(private prisma: PrismaService) {}
 
-  private getDayOfWeek(day: number): schedules_dayOfWeek {
-    const days: schedules_dayOfWeek[] = [
-      schedules_dayOfWeek.SUNDAY,
-      schedules_dayOfWeek.MONDAY,
-      schedules_dayOfWeek.TUESDAY,
-      schedules_dayOfWeek.WEDNESDAY,
-      schedules_dayOfWeek.THURSDAY,
-      schedules_dayOfWeek.FRIDAY,
-      schedules_dayOfWeek.SATURDAY,
-    ];
-    return days[day];
+  private generateQRToken(): string {
+    return randomBytes(16).toString('hex');
   }
 
-  async getActiveSessions() {
-    const now = new Date();
-    const currentDayOfWeek = this.getDayOfWeek(now.getDay()); // Convert to enum value
-    const currentTime = now.toTimeString().slice(0, 5); // Format: "HH:mm"
+  private async generateQRCodeImage(token: string): Promise<string> {
+    try {
+      const qrDataUrl = await QRCode.toDataURL(token, {
+        errorCorrectionLevel: 'M',
+        type: 'image/png',
+        width: 300,
+        margin: 2,
+      });
+      return qrDataUrl;
+    } catch (error) {
+      throw new BadRequestException('Failed to generate QR code');
+    }
+  }
 
-    console.log('🔍 Debug Info:');
-    console.log('Current Day:', currentDayOfWeek);
-    console.log('Current Time:', currentTime);
-    console.log('Date:', now);
-
-    const activeSessions = await this.prisma.schedules.findMany({
-      where: {
-        dayOfWeek: currentDayOfWeek,
-        startTime: {
-          lte: currentTime,
-        },
-        endTime: {
-          gt: currentTime,
-        },
-        isActive: true,
-      },
-      include: {
-        courses: true,
-        teachers: {
-          select: {
-            id: true,
-            name: true,
-          }
-        },
-        classes: {
-          include: {
-            students: true,
-          }
-        },
-        attendance_sessions: {
-          where: {
-            date: new Date(now.setHours(0, 0, 0, 0)),
-          },
-          include: {
-            attendances: true,
-          }
-        }
-      }
+  async createSchedule(teacherId: string, data: any) {
+    const teacher = await this.prisma.teachers.findUnique({
+      where: { id: teacherId },
     });
 
-    console.log('Found sessions:', activeSessions.length);
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
 
-    return activeSessions;
-  }
+    const qrToken = this.generateQRToken();
+    const qrCodeImage = await this.generateQRCodeImage(qrToken);
 
-  // Method untuk debugging - lihat jadwal hari ini tanpa filter waktu
-  async getTodaySchedules() {
-    const now = new Date();
-    const currentDayOfWeek = this.getDayOfWeek(now.getDay());
-
-    const todaySchedules = await this.prisma.schedules.findMany({
-      where: {
-        dayOfWeek: currentDayOfWeek,
-        isActive: true,
+    const schedule = await this.prisma.course_schedules.create({
+      data: {
+        id: uuidv4(),
+        teacherId,
+        courseName: data.courseName,
+        courseCode: data.courseCode,
+        date: new Date(data.date),
+        startTime: data.startTime,
+        endTime: data.endTime,
+        room: data.room,
+        topic: data.topic,
+        qrCode: qrToken,
+        qrCodeImage,
+        status: course_schedules_status.SCHEDULED,
       },
       include: {
-        courses: true,
         teachers: {
           select: {
             id: true,
             name: true,
-          }
+            nip: true,
+          },
         },
-        classes: {
-          include: {
-            students: true,
-          }
+      },
+    });
+
+    return schedule;
+  }
+
+  async getTeacherSchedules(teacherId: string, filter?: any) {
+    const where: any = { teacherId };
+
+    if (filter?.status) {
+      where.status = filter.status;
+    }
+
+    if (filter?.startDate || filter?.endDate) {
+      where.date = {};
+      if (filter.startDate) where.date.gte = new Date(filter.startDate);
+      if (filter.endDate) where.date.lte = new Date(filter.endDate);
+    }
+
+    return this.prisma.course_schedules.findMany({
+      where,
+      include: {
+        teachers: {
+          select: {
+            id: true,
+            name: true,
+            nip: true,
+          },
+        },
+        _count: {
+          select: {
+            attendances: true,
+          },
+        },
+      },
+      orderBy: [
+        { date: 'desc' },
+        { startTime: 'asc' },
+      ],
+    });
+  }
+
+  async getScheduleById(scheduleId: string) {
+    const schedule = await this.prisma.course_schedules.findUnique({
+      where: { id: scheduleId },
+      include: {
+        teachers: {
+          select: {
+            id: true,
+            name: true,
+            nip: true,
+            email: true,
+          },
+        },
+        attendances: {
+          orderBy: { scannedAt: 'desc' },
+        },
+      },
+    });
+
+    if (!schedule) {
+      throw new NotFoundException('Schedule not found');
+    }
+
+    return schedule;
+  }
+
+  async verifyQRCode(qrCode: string) {
+    const schedule = await this.prisma.course_schedules.findUnique({
+      where: { qrCode },
+      include: {
+        teachers: {
+          select: {
+            name: true,
+            nip: true,
+          },
+        },
+      },
+    });
+
+    if (!schedule) {
+      throw new NotFoundException('Invalid QR code');
+    }
+
+    if (schedule.status === course_schedules_status.CLOSED) {
+      throw new BadRequestException('This schedule is closed');
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const scheduleDate = new Date(schedule.date);
+    scheduleDate.setHours(0, 0, 0, 0);
+
+    if (scheduleDate.getTime() !== today.getTime()) {
+      throw new BadRequestException('This schedule is not for today');
+    }
+
+    return {
+      id: schedule.id,
+      courseName: schedule.courseName,
+      courseCode: schedule.courseCode,
+      date: schedule.date,
+      startTime: schedule.startTime,
+      endTime: schedule.endTime,
+      room: schedule.room,
+      topic: schedule.topic,
+      teacher: schedule.teachers,
+      status: schedule.status,
+    };
+  }
+
+  async updateScheduleStatus(scheduleId: string, teacherId: string, status: course_schedules_status) {
+    const schedule = await this.prisma.course_schedules.findUnique({
+      where: { id: scheduleId },
+    });
+
+    if (!schedule) {
+      throw new NotFoundException('Schedule not found');
+    }
+
+    if (schedule.teacherId !== teacherId) {
+      throw new ForbiddenException('You can only update your own schedules');
+    }
+
+    return this.prisma.course_schedules.update({
+      where: { id: scheduleId },
+      data: { status },
+      include: {
+        teachers: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
+  async updateSchedule(scheduleId: string, teacherId: string, data: any) {
+    const schedule = await this.prisma.course_schedules.findUnique({
+      where: { id: scheduleId },
+    });
+
+    if (!schedule) {
+      throw new NotFoundException('Schedule not found');
+    }
+
+    if (schedule.teacherId !== teacherId) {
+      throw new ForbiddenException('You can only update your own schedules');
+    }
+
+    if (schedule.status === course_schedules_status.CLOSED) {
+      throw new BadRequestException('Cannot update closed schedule');
+    }
+
+    const updateData: any = {};
+    if (data.courseName) updateData.courseName = data.courseName;
+    if (data.courseCode) updateData.courseCode = data.courseCode;
+    if (data.date) updateData.date = new Date(data.date);
+    if (data.startTime) updateData.startTime = data.startTime;
+    if (data.endTime) updateData.endTime = data.endTime;
+    if (data.room !== undefined) updateData.room = data.room;
+    if (data.topic !== undefined) updateData.topic = data.topic;
+
+    return this.prisma.course_schedules.update({
+      where: { id: scheduleId },
+      data: updateData,
+      include: {
+        teachers: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
+  async deleteSchedule(scheduleId: string, teacherId: string) {
+    const schedule = await this.prisma.course_schedules.findUnique({
+      where: { id: scheduleId },
+      include: {
+        _count: {
+          select: {
+            attendances: true,
+          },
+        },
+      },
+    });
+
+    if (!schedule) {
+      throw new NotFoundException('Schedule not found');
+    }
+
+    if (schedule.teacherId !== teacherId) {
+      throw new ForbiddenException('You can only delete your own schedules');
+    }
+
+    if (schedule._count.attendances > 0) {
+      throw new BadRequestException('Cannot delete schedule with attendance records');
+    }
+
+    await this.prisma.course_schedules.delete({
+      where: { id: scheduleId },
+    });
+
+    return { message: 'Schedule deleted successfully' };
+  }
+
+  async getTodayActiveSchedules(teacherId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return this.prisma.course_schedules.findMany({
+      where: {
+        teacherId,
+        date: {
+          gte: today,
+          lt: tomorrow,
+        },
+        status: {
+          in: [course_schedules_status.SCHEDULED, course_schedules_status.ACTIVE],
+        },
+      },
+      include: {
+        _count: {
+          select: {
+            attendances: true,
+          },
         },
       },
       orderBy: {
         startTime: 'asc',
-      }
-    });
-
-    return {
-      day: currentDayOfWeek,
-      currentTime: now.toTimeString().slice(0, 5),
-      count: todaySchedules.length,
-      schedules: todaySchedules,
-    };
-  }
-
-  async createSchedule(data: any) {
-    const { courseId, classId, teacherId, dayOfWeek, startTime, endTime, room, wifiNetworkId } = data;
-
-    if (!courseId || !classId || !teacherId || !dayOfWeek || !startTime || !endTime) {
-      throw new BadRequestException('Semua field wajib diisi');
-    }
-
-    // Validasi foreign key
-    const [course, classes, teacher] = await Promise.all([
-      this.prisma.courses.findUnique({ where: { id: courseId } }),
-      this.prisma.classes.findUnique({ where: { id: classId } }),
-      this.prisma.teachers.findUnique({ where: { id: teacherId } }),
-    ]);
-
-    if (!course) throw new NotFoundException('Mata pelajaran tidak ditemukan');
-    if (!classes) throw new NotFoundException('Kelas tidak ditemukan');
-    if (!teacher) throw new NotFoundException('Guru tidak ditemukan');
-
-    const schedule = await this.prisma.schedules.create({
-      data: {
-        id: uuidv4(),
-        courseId,
-        classId,
-        teacherId,
-        dayOfWeek,
-        startTime,
-        endTime,
-        room: room || null,
-        wifiNetworkId: wifiNetworkId || null,
-        isActive: true,
-        updatedAt: new Date(),
-      },
-      include: {
-        courses: true,
-        teachers: true,
-        classes: true,
       },
     });
-
-    return { message: 'Jadwal berhasil dibuat', schedule };
-  }
-
-  async getAllSchedules() {
-    return await this.prisma.schedules.findMany({
-      include: {
-        courses: true,
-        teachers: true,
-        classes: true,
-        wifi_networks: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  async getScheduleById(id: string) {
-    const schedule = await this.prisma.schedules.findUnique({
-      where: { id },
-      include: {
-        courses: true,
-        teachers: true,
-        classes: true,
-        wifi_networks: true,
-      },
-    });
-    if (!schedule) throw new NotFoundException('Jadwal tidak ditemukan');
-    return schedule;
-  }
-
-  async updateSchedule(id: string, data: any) {
-    const existing = await this.prisma.schedules.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException('Jadwal tidak ditemukan');
-
-    delete data.id; // biar aman
-    const updated = await this.prisma.schedules.update({
-      where: { id },
-      data: { ...data, updatedAt: new Date() },
-    });
-
-    return { message: 'Jadwal berhasil diperbarui', updated };
-  }
-
-  async deleteSchedule(id: string) {
-    const existing = await this.prisma.schedules.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException('Jadwal tidak ditemukan');
-
-    await this.prisma.schedules.delete({ where: { id } });
-    return { message: 'Jadwal berhasil dihapus' };
   }
 }

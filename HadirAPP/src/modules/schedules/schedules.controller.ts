@@ -1,58 +1,71 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { SchedulesService } from './schedules.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @Controller('schedules')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('TEACHER')
 export class SchedulesController {
   constructor(private readonly schedulesService: SchedulesService) {}
 
-  @Get('active')
-  @UseGuards(JwtAuthGuard)
-  getActiveSessions() {
-    return this.schedulesService.getActiveSessions();
-  }
-
-  // Endpoint untuk debugging - cek semua jadwal
-  @Get('debug/all')
-  @UseGuards(JwtAuthGuard)
-  getAllSchedulesDebug() {
-    return this.schedulesService.getAllSchedules();
-  }
-
-  // Endpoint untuk debugging - cek jadwal hari ini
-  @Get('debug/today')
-  @UseGuards(JwtAuthGuard)
-  getTodaySchedules() {
-    return this.schedulesService.getTodaySchedules();
-  }
-
   @Post()
-  @UseGuards(JwtAuthGuard)
-  createSchedule(@Body() body: any) {
-    return this.schedulesService.createSchedule(body);
+  async createSchedule(@Request() req, @Body() body: any) {
+    const teacherId = req.user.teacherId || req.user.profile?.id;
+    if (!teacherId) {
+      throw new Error('Teacher ID not found in token');
+    }
+    return this.schedulesService.createSchedule(teacherId, body);
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
-  getAllSchedules() {
-    return this.schedulesService.getAllSchedules();
+  async getTeacherSchedules(@Request() req, @Query() query: any) {
+    const teacherId = req.user.teacherId || req.user.profile?.id;
+    if (!teacherId) {
+      throw new Error('Teacher ID not found in token');
+    }
+    return this.schedulesService.getTeacherSchedules(teacherId, query);
+  }
+
+  @Get('today')
+  async getTodaySchedules(@Request() req) {
+    const teacherId = req.user.teacherId || req.user.profile?.id;
+    if (!teacherId) {
+      throw new Error('Teacher ID not found in token');
+    }
+    return this.schedulesService.getTodayActiveSchedules(teacherId);
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
-  getScheduleById(@Param('id') id: string) {
+  async getScheduleById(@Param('id') id: string) {
     return this.schedulesService.getScheduleById(id);
   }
 
+  @Patch(':id/status')
+  async updateStatus(@Request() req, @Param('id') id: string, @Body('status') status: string) {
+    const teacherId = req.user.teacherId || req.user.profile?.id;
+    if (!teacherId) {
+      throw new Error('Teacher ID not found in token');
+    }
+    return this.schedulesService.updateScheduleStatus(id, teacherId, status as any);
+  }
+
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
-  updateSchedule(@Param('id') id: string, @Body() body: any) {
-    return this.schedulesService.updateSchedule(id, body);
+  async updateSchedule(@Request() req, @Param('id') id: string, @Body() body: any) {
+    const teacherId = req.user.teacherId || req.user.profile?.id;
+    if (!teacherId) {
+      throw new Error('Teacher ID not found in token');
+    }
+    return this.schedulesService.updateSchedule(id, teacherId, body);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
-  deleteSchedule(@Param('id') id: string) {
-    return this.schedulesService.deleteSchedule(id);
+  async deleteSchedule(@Request() req, @Param('id') id: string) {
+    const teacherId = req.user.teacherId || req.user.profile?.id;
+    if (!teacherId) {
+      throw new Error('Teacher ID not found in token');
+    }
+    return this.schedulesService.deleteSchedule(id, teacherId);
   }
 }

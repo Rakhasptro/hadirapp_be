@@ -21,51 +21,32 @@ export class AuthService {
     const existingUser = await this.prisma.users.findUnique({ where: { email } });
     if (existingUser) throw new BadRequestException('Email already registered');
 
-    const allowedRoles = ['ADMIN', 'STUDENT', 'TEACHER'];
-    const normalizedRole = (role || 'STUDENT').toUpperCase();
-    if (!allowedRoles.includes(normalizedRole)) {
-      throw new BadRequestException(`Invalid role. Allowed: ${allowedRoles.join(', ')}`);
-    }
-
     const hashed = await bcrypt.hash(password, 10);
 
-    // 1️⃣ Buat user baru
+    // Create teacher user (only role available)
     const user = await this.prisma.users.create({
       data: {
         id: uuidv4(),
         email,
         password: hashed,
-        role: normalizedRole as users_role,
+        role: 'TEACHER' as users_role,
         updatedAt: new Date(),
       },
     });
 
-    // 2️⃣ Buat profil otomatis berdasarkan role
-    if (normalizedRole === 'STUDENT') {
-      await this.prisma.students.create({
-        data: {
-          id: uuidv4(),
-          userId: user.id,
-          nis: `NIS-${Math.floor(Math.random() * 10000)}`,
-          name: email.split('@')[0],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      });
-    } else if (normalizedRole === 'TEACHER') {
-      await this.prisma.teachers.create({
-        data: {
-          id: uuidv4(),
-          userId: user.id,
-          nip: `NIP-${Math.floor(Math.random() * 10000)}`,
-          name: email.split('@')[0],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      });
-    }
+    // Auto-create teacher profile
+    await this.prisma.teachers.create({
+      data: {
+        id: uuidv4(),
+        userId: user.id,
+        nip: `NIP-${Math.floor(Math.random() * 100000)}`,
+        name: email.split('@')[0],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
 
-    return { message: 'User registered successfully', user };
+    return { message: 'Teacher registered successfully', user };
   }
 
   async login(email: string, password: string) {
@@ -75,7 +56,7 @@ export class AuthService {
 
     const user = await this.prisma.users.findUnique({
       where: { email },
-      include: { students: true, teachers: true },
+      include: { teachers: true },
     });
     if (!user) throw new UnauthorizedException('User not found');
 
@@ -86,12 +67,8 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      teacherId: user.teachers?.id, // Add teacher ID to JWT payload
     });
-
-    // 3️⃣ Ambil profil sesuai role
-    let profile: any = null;
-    if (user.role === 'STUDENT') profile = user.students;
-    if (user.role === 'TEACHER') profile = user.teachers;
 
     return {
       message: 'Login success',
@@ -100,7 +77,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         role: user.role,
-        profile,
+        profile: user.teachers,
       },
     };
   }

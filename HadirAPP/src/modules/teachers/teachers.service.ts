@@ -56,8 +56,7 @@ export class TeachersService {
         users: {
             select: { email: true, isActive: true }
         },
-        courses: true, // Menampilkan mata pelajaran yang diajarkan
-        schedules: true, // Menampilkan jadwal mengajar
+        course_schedules: true, // Menampilkan jadwal mengajar dengan course info
       }
     });
 
@@ -104,9 +103,10 @@ export class TeachersService {
 
   // 6. TEACHER DASHBOARD - Statistik untuk teacher
   async getTeacherDashboard(user: any) {
-    // Ambil data teacher dari user
+    // Ambil data teacher dari user (support both userId and id from JWT)
+    const userIdToUse = user.userId || user.id;
     const teacher = await this.prisma.teachers.findUnique({
-      where: { userId: user.id },
+      where: { userId: userIdToUse },
     });
 
     if (!teacher) {
@@ -116,77 +116,71 @@ export class TeachersService {
     // Hitung statistik
     const today = new Date();
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-    // Total kelas yang diampu (hitung unique classId)
-    const uniqueClasses = await this.prisma.schedules.findMany({
-      where: { teacherId: teacher.id },
-      select: { classId: true },
-      distinct: ['classId'],
-    });
-    const totalClasses = uniqueClasses.length;
-
-    // Total mata pelajaran yang diajarkan
-    const totalCourses = await this.prisma.courses.count({
+    // Total schedules
+    const totalSchedules = await this.prisma.course_schedules.count({
       where: { teacherId: teacher.id },
     });
 
-    // Total siswa dari semua kelas yang diampu
-    const classesData = await this.prisma.schedules.findMany({
-      where: { teacherId: teacher.id },
-      include: {
-        classes: {
-          include: {
-            students: true,
-          },
-        },
-      },
-      distinct: ['classId'],
-    });
-
-    const totalStudents = classesData.reduce((sum, schedule) => {
-      return sum + (schedule.classes?.students?.length || 0);
-    }, 0);
-
-    // Sesi hari ini
-    const todaySessions = await this.prisma.attendance_sessions.count({
+    // Schedules hari ini
+    const todaySchedules = await this.prisma.course_schedules.count({
       where: {
         teacherId: teacher.id,
-        date: startOfDay,
+        date: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+    });
+
+    // Total attendances pending
+    const pendingAttendances = await this.prisma.attendances.count({
+      where: {
+        schedule: {
+          teacherId: teacher.id,
+        },
+        status: 'PENDING',
+      },
+    });
+
+    // Total attendances confirmed
+    const confirmedAttendances = await this.prisma.attendances.count({
+      where: {
+        schedule: {
+          teacherId: teacher.id,
+        },
+        status: 'CONFIRMED',
       },
     });
 
     return {
       teacherId: teacher.id,
       teacherName: teacher.name,
-      totalClasses,
-      totalCourses,
-      totalStudents,
-      todaySessions,
+      totalSchedules,
+      todaySchedules,
+      pendingAttendances,
+      confirmedAttendances,
     };
   }
 
   // 7. MY SCHEDULE - Jadwal mengajar teacher
   async getMySchedule(user: any) {
+    const userIdToUse = user.userId || user.id;
     const teacher = await this.prisma.teachers.findUnique({
-      where: { userId: user.id },
+      where: { userId: userIdToUse },
     });
 
     if (!teacher) {
       throw new NotFoundException('Teacher profile not found');
     }
 
-    const schedules = await this.prisma.schedules.findMany({
+    const schedules = await this.prisma.course_schedules.findMany({
       where: {
         teacherId: teacher.id,
-        isActive: true,
-      },
-      include: {
-        courses: true,
-        classes: true,
-        wifi_networks: true,
       },
       orderBy: [
-        { dayOfWeek: 'asc' },
+        { date: 'desc' },
         { startTime: 'asc' },
       ],
     });
@@ -194,50 +188,33 @@ export class TeachersService {
     return schedules;
   }
 
-  // 8. MY CLASSES - Kelas yang diampu teacher
+  // 8. MY CLASSES - Simplified untuk schedule courses
   async getMyClasses(user: any) {
+    const userIdToUse = user.userId || user.id;
     const teacher = await this.prisma.teachers.findUnique({
-      where: { userId: user.id },
+      where: { userId: userIdToUse },
     });
 
     if (!teacher) {
       throw new NotFoundException('Teacher profile not found');
     }
 
-    const schedules = await this.prisma.schedules.findMany({
+    const schedules = await this.prisma.course_schedules.findMany({
       where: {
         teacherId: teacher.id,
-        isActive: true,
       },
       include: {
-        classes: {
-          include: {
-            students: true,
+        _count: {
+          select: {
+            attendances: true,
           },
         },
-        courses: true,
+      },
+      orderBy: {
+        date: 'desc',
       },
     });
 
-    // Group by classId untuk menghindari duplikat
-    const uniqueClasses = new Map();
-    schedules.forEach(schedule => {
-      if (schedule.classes && !uniqueClasses.has(schedule.classes.id)) {
-        uniqueClasses.set(schedule.classes.id, schedule);
-      }
-    });
-
-    return Array.from(uniqueClasses.values()).map(schedule => ({
-      classId: schedule.classes?.id,
-      className: schedule.classes?.name,
-      grade: schedule.classes?.grade,
-      major: schedule.classes?.major,
-      totalStudents: schedule.classes?.students?.length || 0,
-      course: {
-        id: schedule.courses?.id,
-        name: schedule.courses?.name,
-        code: schedule.courses?.code,
-      },
-    }));
+    return schedules;
   }
 }
