@@ -52,8 +52,11 @@ export class ProfileService {
       const teacherData: any = {};
       if (updateData.name !== undefined) teacherData.name = updateData.name;
       if (updateData.nip !== undefined) teacherData.nip = updateData.nip;
+      if (updateData.email !== undefined) teacherData.email = updateData.email;
+      if (updateData.gender !== undefined) teacherData.gender = updateData.gender;
       if (updateData.phone !== undefined) teacherData.phone = updateData.phone;
       if (updateData.address !== undefined) teacherData.address = updateData.address;
+      if (updateData.photo !== undefined) teacherData.photo = updateData.photo;
 
       if (Object.keys(teacherData).length > 0) {
         await this.prisma.teachers.update({
