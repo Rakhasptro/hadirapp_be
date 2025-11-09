@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { 
   ChevronsUpDown,
   User,
@@ -41,12 +41,54 @@ import {
 import { useNavigate, Outlet } from "react-router-dom"
 import { ModeToggle } from "@/components/mode-toggle"
 import { authService } from "@/lib/auth"
+import { useState, useEffect } from "react"
+import axios from "@/lib/axios"
+
+interface TeacherProfile {
+  id: string
+  name: string
+  nip: string
+  email: string | null
+  gender: string | null
+  phone: string | null
+  address: string | null
+  photo: string | null
+}
+
+interface UserProfile {
+  id: string
+  email: string
+  role: 'ADMIN' | 'TEACHER' | 'STUDENT'
+  profile: TeacherProfile | any
+}
 
 export function MainLayout() {
   const navigate = useNavigate()
   const user = authService.getUser()
   const isAdmin = user?.role === 'ADMIN'
   const isTeacher = user?.role === 'TEACHER'
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+
+  useEffect(() => {
+    fetchUserProfile()
+  }, [])
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await axios.get('/profile')
+      setUserProfile(response.data.user)
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error)
+    }
+  }
+
+  const getPhotoUrl = (photo: string | null) => {
+    if (!photo) return null
+    if (photo.startsWith('http')) return photo
+    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+    const apiBaseURL = baseURL.replace('/api', '')
+    return `${apiBaseURL}${photo}`
+  }
 
   const handleLogout = () => {
     authService.logout()
@@ -55,7 +97,22 @@ export function MainLayout() {
 
   const getUserInitials = () => {
     if (!user) return 'U'
+    if (userProfile?.role === 'TEACHER' && userProfile?.profile?.name) {
+      return userProfile.profile.name
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    }
     return user.email.substring(0, 2).toUpperCase()
+  }
+
+  const getDisplayName = () => {
+    if (userProfile?.role === 'TEACHER' && userProfile?.profile?.name) {
+      return userProfile.profile.name
+    }
+    return user?.email || 'User'
   }
 
   return (
@@ -275,12 +332,18 @@ export function MainLayout() {
                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   >
                     <Avatar className="h-8 w-8 rounded-lg">
+                      {userProfile?.role === 'TEACHER' && userProfile?.profile?.photo ? (
+                        <AvatarImage 
+                          src={getPhotoUrl(userProfile.profile.photo) || undefined} 
+                          alt={userProfile.profile.name} 
+                        />
+                      ) : null}
                       <AvatarFallback className="rounded-lg">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">{user?.email}</span>
+                      <span className="truncate font-semibold">{getDisplayName()}</span>
                       <span className="truncate text-xs">{user?.role}</span>
                     </div>
                     <ChevronsUpDown className="ml-auto size-4" />

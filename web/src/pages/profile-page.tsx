@@ -67,6 +67,14 @@ export function ProfilePage() {
     fetchProfile()
   }, [])
 
+  const getPhotoUrl = (photo: string | null) => {
+    if (!photo) return null
+    if (photo.startsWith('http')) return photo
+    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+    const apiBaseURL = baseURL.replace('/api', '')
+    return `${apiBaseURL}${photo}`
+  }
+
   const fetchProfile = async () => {
     try {
       setLoading(true)
@@ -335,7 +343,10 @@ export function ProfilePage() {
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20">
                 {profile.role === 'TEACHER' && profile.profile?.photo ? (
-                  <AvatarImage src={profile.profile.photo} alt={profile.profile.name} />
+                  <AvatarImage 
+                    src={getPhotoUrl(profile.profile.photo) || undefined} 
+                    alt={profile.profile.name} 
+                  />
                 ) : null}
                 <AvatarFallback className="text-2xl font-bold">
                   {getInitials()}
