@@ -14,6 +14,7 @@ import { LeaveModule } from './modules/leave/leave.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { TeachersModule } from 'modules/teachers/teachers.module';
 import { WifiModule } from './modules/wifi/wifi.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { WifiModule } from './modules/wifi/wifi.module';
     LeaveModule,
     TeachersModule,
     WifiModule,
+    UploadModule,
   ],
   controllers: [AppController],
 })

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Upload, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +42,8 @@ export default function UserFormPage() {
 
   const [loading, setLoading] = useState(false);
   const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>('');
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -102,6 +104,46 @@ export default function UserFormPage() {
     }
   };
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Error',
+          description: 'File harus berupa gambar',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: 'Error',
+          description: 'Ukuran file maksimal 2MB',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setPhotoFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview('');
+    setFormData({ ...formData, photo: '' });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -145,6 +187,29 @@ export default function UserFormPage() {
     try {
       setLoading(true);
       
+      // Upload photo first if teacher has selected a photo
+      let photoUrl = formData.photo;
+      if (formData.role === 'TEACHER' && photoFile) {
+        const formDataUpload = new FormData();
+        formDataUpload.append('photo', photoFile);
+        
+        try {
+          const uploadResponse = await apiClient.post('/upload/photo', formDataUpload, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+          photoUrl = uploadResponse.data.url;
+        } catch (uploadError: any) {
+          toast({
+            title: 'Error',
+            description: uploadError.response?.data?.message || 'Gagal mengupload foto',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+      
       const payload: any = {
         email: formData.email,
         role: formData.role,
@@ -160,7 +225,7 @@ export default function UserFormPage() {
         payload.nip = formData.nip;
         payload.gender = formData.gender || null;
         payload.address = formData.address || null;
-        payload.photo = formData.photo || null;
+        payload.photo = photoUrl || null;
       }
 
       if (!isEditMode) {
@@ -337,14 +402,52 @@ export default function UserFormPage() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="photo">URL Foto Profil</Label>
-                    <Input
-                      id="photo"
-                      value={formData.photo}
-                      onChange={(e) => setFormData({ ...formData, photo: e.target.value })}
-                      placeholder="https://example.com/photo.jpg"
-                    />
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="photo">Foto Profil</Label>
+                    <div className="flex items-start gap-4">
+                      {/* Preview Area */}
+                      {(photoPreview || formData.photo) && (
+                        <div className="relative">
+                          <img
+                            src={photoPreview || formData.photo}
+                            alt="Preview"
+                            className="w-24 h-24 object-cover rounded-lg border"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                            onClick={handleRemovePhoto}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {/* Upload Button */}
+                      <div className="flex-1">
+                        <Input
+                          id="photo"
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoChange}
+                          className="hidden"
+                        />
+                        <Label
+                          htmlFor="photo"
+                          className="flex items-center justify-center gap-2 p-4 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                        >
+                          <Upload className="h-5 w-5" />
+                          <span className="text-sm">
+                            {photoPreview || formData.photo ? 'Ganti Foto' : 'Upload Foto'}
+                          </span>
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Format: JPG, PNG, GIF. Maksimal 2MB.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
