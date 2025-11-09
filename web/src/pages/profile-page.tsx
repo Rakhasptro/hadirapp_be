@@ -299,7 +299,7 @@ export function ProfilePage() {
       case 'TEACHER':
         return 'Guru'
       case 'STUDENT':
-        return 'Siswa'
+        return 'Mahasiswa'
       default:
         return role
     }
