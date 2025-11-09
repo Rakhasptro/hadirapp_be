@@ -169,7 +169,7 @@ export default function UserFormPage() {
     if (formData.role === 'STUDENT' && !formData.nis) {
       toast({
         title: 'Error',
-        description: 'NIS harus diisi untuk siswa',
+        description: 'NIS harus diisi untuk mahasiswa',
         variant: 'destructive',
       });
       return;
@@ -320,7 +320,7 @@ export default function UserFormPage() {
                   <SelectContent>
                     <SelectItem value="ADMIN">Admin</SelectItem>
                     <SelectItem value="TEACHER">Guru</SelectItem>
-                    <SelectItem value="STUDENT">Siswa</SelectItem>
+                    <SelectItem value="STUDENT">Mahasiswa</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -346,7 +346,7 @@ export default function UserFormPage() {
                       id="nis"
                       value={formData.nis}
                       onChange={(e) => setFormData({ ...formData, nis: e.target.value })}
-                      placeholder="Nomor Induk Siswa"
+                      placeholder="Nomor Induk Mahasiswa"
                       required
                     />
                   </div>

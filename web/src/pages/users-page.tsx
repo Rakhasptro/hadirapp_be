@@ -189,7 +189,7 @@ export default function UsersPage() {
       case 'TEACHER':
         return 'Guru';
       case 'STUDENT':
-        return 'Siswa';
+        return 'Mahasiswa';
       default:
         return role;
     }
@@ -237,7 +237,7 @@ export default function UsersPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Siswa</CardTitle>
+              <CardTitle className="text-sm font-medium">Mahasiswa</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.byRole.students}</div>
@@ -270,7 +270,7 @@ export default function UsersPage() {
                 <SelectItem value="all">Semua Role</SelectItem>
                 <SelectItem value="ADMIN">Admin</SelectItem>
                 <SelectItem value="TEACHER">Guru</SelectItem>
-                <SelectItem value="STUDENT">Siswa</SelectItem>
+                <SelectItem value="STUDENT">Mahasiswa</SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>

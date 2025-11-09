@@ -310,7 +310,7 @@ export function MainLayout() {
                   <SidebarMenuItem>
                     <SidebarMenuButton tooltip="Leave Requests">
                       <FileText className="size-4" />
-                      <span>Izin Siswa</span>
+                      <span>Izin Mahasiswa</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   
