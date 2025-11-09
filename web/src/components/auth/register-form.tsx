@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { authService } from '@/lib/auth';
+import { toast } from 'sonner';
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
@@ -28,12 +29,16 @@ export function RegisterForm({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
 
     // Validation
     if (password !== confirmPassword) {
-      setError('Password tidak cocok');
+      const message = 'Password tidak cocok';
+      setError(message);
+      toast.error(message);
       return;
     }
 
     if (password.length < 6) {
-      setError('Password minimal 6 karakter');
+      const message = 'Password minimal 6 karakter';
+      setError(message);
+      toast.error(message);
       return;
     }
 
@@ -47,11 +52,15 @@ export function RegisterForm({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
       });
       
       setSuccess(true);
+      toast.success('Registrasi berhasil! Mengalihkan ke halaman login...');
       setTimeout(() => {
         onSuccess();
       }, 2000);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registrasi gagal. Silakan coba lagi.');
+      console.error('Registration error:', err);
+      const message = err.response?.data?.message || 'Registrasi gagal. Email mungkin sudah terdaftar.';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

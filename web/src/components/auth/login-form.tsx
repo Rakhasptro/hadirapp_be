@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { authService } from '@/lib/auth';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
@@ -28,16 +29,15 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
       const response = await authService.login({ email, password });
       console.log('Login successful:', response);
       
-      // Redirect based on role
-      if (response.user.role === 'ADMIN') {
-        navigate('/admin/dashboard');
-      } else if (response.user.role === 'TEACHER') {
-        navigate('/teacher/dashboard');
-      } else {
-        navigate('/student/dashboard');
-      }
+      toast.success('Login berhasil! Selamat datang.');
+      
+      // Redirect to dashboard (teacher-only system)
+      navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login gagal. Silakan coba lagi.');
+      console.error('Login error:', err);
+      const message = err.response?.data?.message || 'Login gagal. Email atau password salah.';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

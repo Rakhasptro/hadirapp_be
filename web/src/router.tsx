@@ -2,17 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthPage } from '@/pages/auth-page';
 import { ProfilePage } from '@/pages/profile-page';
 import { DashboardContent } from '@/pages/dashboard-content';
-import AttendanceSessionsPage from '@/pages/attendance-sessions-page';
-import SessionDetailPage from '@/pages/session-detail-page';
 import SchedulesPage from '@/pages/schedules-page';
 import ScheduleFormPage from '@/pages/schedule-form-page';
-import UsersPage from '@/pages/users-page';
-import UserFormPage from '@/pages/user-form-page';
-import ResetPasswordPage from '@/pages/reset-password-page';
-import ClassesPage from '@/pages/classes-page';
-import ClassFormPage from '@/pages/class-form-page';
-import CoursesPage from '@/pages/courses-page';
-import CourseFormPage from '@/pages/course-form-page';
+import PendingAttendancesPage from '@/pages/pending-attendances-page';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { MainLayout } from '@/components/layout/main-layout';
 import { authService } from '@/lib/auth';
@@ -50,47 +42,14 @@ export function AppRouter() {
           {/* Profile */}
           <Route path="/profile" element={<ProfilePage />} />
           
-          {/* Attendance */}
-          <Route path="/attendance/sessions" element={<AttendanceSessionsPage />} />
-          <Route path="/attendance/sessions/:id" element={<SessionDetailPage />} />
-          
           {/* Schedules */}
           <Route path="/schedules" element={<SchedulesPage />} />
           <Route path="/schedules/create" element={<ScheduleFormPage />} />
           <Route path="/schedules/edit/:id" element={<ScheduleFormPage />} />
           
-          {/* Users Management */}
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/users/create" element={<UserFormPage />} />
-          <Route path="/users/edit/:id" element={<UserFormPage />} />
-          <Route path="/users/:id/reset-password" element={<ResetPasswordPage />} />
-          
-          {/* Classes Management */}
-          <Route path="/classes" element={<ClassesPage />} />
-          <Route path="/classes/create" element={<ClassFormPage />} />
-          <Route path="/classes/edit/:id" element={<ClassFormPage />} />
-          
-          {/* Courses Management */}
-          <Route path="/courses" element={<CoursesPage />} />
-          <Route path="/courses/new" element={<CourseFormPage />} />
-          <Route path="/courses/:id" element={<CourseFormPage />} />
+          {/* Attendance */}
+          <Route path="/attendance/pending" element={<PendingAttendancesPage />} />
         </Route>
-        
-        {/* Legacy routes - redirect to unified dashboard */}
-        <Route
-          path="/admin/dashboard"
-          element={<Navigate to="/dashboard" replace />}
-        />
-        
-        <Route
-          path="/teacher/dashboard"
-          element={<Navigate to="/dashboard" replace />}
-        />
-        
-        <Route
-          path="/student/dashboard"
-          element={<Navigate to="/dashboard" replace />}
-        />
         
         {/* Default redirect */}
         <Route

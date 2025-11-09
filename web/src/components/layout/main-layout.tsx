@@ -28,15 +28,7 @@ import {
   Settings,
   LayoutDashboard,
   CalendarCheck,
-  Users,
-  GraduationCap,
-  BookOpen,
-  Library,
-  Calendar,
-  FileText,
-  BellRing,
-  Wifi,
-  UserCog
+  Calendar
 } from "lucide-react"
 import { useNavigate, Outlet } from "react-router-dom"
 import { ModeToggle } from "@/components/mode-toggle"
@@ -65,8 +57,6 @@ interface UserProfile {
 export function MainLayout() {
   const navigate = useNavigate()
   const user = authService.getUser()
-  const isAdmin = user?.role === 'ADMIN'
-  const isTeacher = user?.role === 'TEACHER'
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
   useEffect(() => {
@@ -132,205 +122,46 @@ export function MainLayout() {
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                      <GraduationCap className="size-4" />
-                    </div>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">HadirApp</span>
-                      <span className="truncate text-xs">{user?.role || 'User'}</span>
-                    </div>
-                    <ChevronsUpDown className="ml-auto" />
-                  </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                  align="start"
-                  side="bottom"
-                  sideOffset={4}
-                >
-                  <DropdownMenuItem className="gap-2 p-2">
-                    <div className="flex size-6 items-center justify-center rounded-sm border">
-                      <GraduationCap className="size-4 shrink-0" />
-                    </div>
-                    HadirApp - Sistem Kehadiran
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <SidebarMenuButton size="lg">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  <Calendar className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">HadirApp</span>
+                  <span className="truncate text-xs">Sistem Kehadiran QR</span>
+                </div>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
         
         <SidebarContent>
-          {/* ADMIN Menu */}
-          {isAdmin && (
-            <>
-              <SidebarGroup>
-                <SidebarGroupLabel>Menu Utama</SidebarGroupLabel>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Dashboard" onClick={() => navigate('/dashboard')}>
-                      <LayoutDashboard className="size-4" />
-                      <span>Dashboard</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Attendance" onClick={() => navigate('/attendance/sessions')}>
-                      <CalendarCheck className="size-4" />
-                      <span>Kehadiran</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Schedules" onClick={() => navigate('/schedules')}>
-                      <Calendar className="size-4" />
-                      <span>Jadwal</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Leave">
-                      <FileText className="size-4" />
-                      <span>Izin/Cuti</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Notifications">
-                      <BellRing className="size-4" />
-                      <span>Notifikasi</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroup>
+          {/* TEACHER Menu - New QR-based system */}
+          <SidebarGroup>
+            <SidebarGroupLabel>Menu Utama</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton tooltip="Dashboard" onClick={() => navigate('/dashboard')}>
+                  <LayoutDashboard className="size-4" />
+                  <span>Dashboard</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               
-              <SidebarGroup>
-                <SidebarGroupLabel>Manajemen</SidebarGroupLabel>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Users" onClick={() => navigate('/users')}>
-                      <Users className="size-4" />
-                      <span>Pengguna</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Teachers">
-                      <GraduationCap className="size-4" />
-                      <span>Guru</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Classes" onClick={() => navigate('/classes')}>
-                      <BookOpen className="size-4" />
-                      <span>Kelas</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Courses" onClick={() => navigate('/courses')}>
-                      <Library className="size-4" />
-                      <span>Mata Kuliah</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroup>
+              <SidebarMenuItem>
+                <SidebarMenuButton tooltip="Schedules" onClick={() => navigate('/schedules')}>
+                  <Calendar className="size-4" />
+                  <span>Jadwal & QR Code</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               
-              <SidebarGroup>
-                <SidebarGroupLabel>Sistem</SidebarGroupLabel>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="WiFi Management">
-                      <Wifi className="size-4" />
-                      <span>WiFi</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Admin">
-                      <UserCog className="size-4" />
-                      <span>Admin</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Settings">
-                      <Settings className="size-4" />
-                      <span>Pengaturan</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroup>
-            </>
-          )}
-
-          {/* TEACHER Menu */}
-          {isTeacher && (
-            <>
-              <SidebarGroup>
-                <SidebarGroupLabel>Menu Utama</SidebarGroupLabel>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Dashboard" onClick={() => navigate('/dashboard')}>
-                      <LayoutDashboard className="size-4" />
-                      <span>Dashboard</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="My Schedule">
-                      <Calendar className="size-4" />
-                      <span>Jadwal Mengajar</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="My Classes">
-                      <BookOpen className="size-4" />
-                      <span>Kelas Saya</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Attendance">
-                      <CalendarCheck className="size-4" />
-                      <span>Kehadiran</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroup>
-              
-              <SidebarGroup>
-                <SidebarGroupLabel>Lainnya</SidebarGroupLabel>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Leave Requests">
-                      <FileText className="size-4" />
-                      <span>Izin Mahasiswa</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Notifications">
-                      <BellRing className="size-4" />
-                      <span>Notifikasi</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  
-                  <SidebarMenuItem>
-                    <SidebarMenuButton tooltip="Profile" onClick={() => navigate('/profile')}>
-                      <User className="size-4" />
-                      <span>Profil Saya</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroup>
-            </>
-          )}
+              <SidebarMenuItem>
+                <SidebarMenuButton tooltip="Pending Attendances" onClick={() => navigate('/attendance/pending')}>
+                  <CalendarCheck className="size-4" />
+                  <span>Konfirmasi Kehadiran</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
         </SidebarContent>
         
         <SidebarFooter>

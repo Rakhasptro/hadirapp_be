@@ -1,43 +1,63 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, BookOpen, CalendarCheck } from "lucide-react"
+import { Calendar, CheckCircle, Clock } from "lucide-react"
 import { useState, useEffect } from "react"
 import axios from "@/lib/axios"
 
-interface TeacherStats {
-  teacherId: string
-  teacherName: string
-  totalClasses: number
-  totalCourses: number
-  totalStudents: number
-  todaySessions: number
+interface Schedule {
+  id: string
+  date: string
+  status: 'SCHEDULED' | 'ACTIVE' | 'CLOSED'
+}
+
+interface Attendance {
+  id: string
+  status: 'PENDING' | 'CONFIRMED' | 'REJECTED'
 }
 
 export function TeacherStatsCards() {
-  const [stats, setStats] = useState<TeacherStats | null>(null)
+  const [schedules, setSchedules] = useState<Schedule[]>([])
+  const [attendances, setAttendances] = useState<Attendance[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get('/teachers/dashboard')
-        setStats(response.data)
+        const [schedulesRes, attendancesRes] = await Promise.all([
+          axios.get('/schedules'),
+          axios.get('/attendance/pending')
+        ])
+        setSchedules(schedulesRes.data)
+        setAttendances(attendancesRes.data)
       } catch (error) {
-        console.error('Failed to fetch teacher stats:', error)
+        console.error('Failed to fetch stats:', error)
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchStats()
+    fetchData()
     // Refresh stats every 30 seconds
-    const interval = setInterval(fetchStats, 30000)
+    const interval = setInterval(fetchData, 30000)
     return () => clearInterval(interval)
   }, [])
 
+  // Calculate stats
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  const todaySchedules = schedules.filter(s => {
+    const scheduleDate = new Date(s.date)
+    scheduleDate.setHours(0, 0, 0, 0)
+    return scheduleDate.getTime() === today.getTime()
+  })
+
+  const activeSchedules = todaySchedules.filter(s => s.status === 'ACTIVE')
+  const pendingAttendances = attendances.filter(a => a.status === 'PENDING')
+
   if (isLoading) {
     return (
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3].map((i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="h-4 w-24 bg-muted animate-pulse rounded"></div>
@@ -55,41 +75,33 @@ export function TeacherStatsCards() {
 
   const cards = [
     {
-      title: "Kelas Diampu",
-      value: stats?.totalClasses || 0,
-      icon: Users,
-      description: "Kelas aktif",
+      title: "Jadwal Hari Ini",
+      value: todaySchedules.length,
+      icon: Calendar,
+      description: "Total jadwal",
       color: "text-blue-600",
       bgColor: "bg-blue-100 dark:bg-blue-900/20",
     },
     {
-      title: "Mata Pelajaran",
-      value: stats?.totalCourses || 0,
-      icon: BookOpen,
-      description: "Mata pelajaran",
+      title: "QR Code Aktif",
+      value: activeSchedules.length,
+      icon: CheckCircle,
+      description: "Sedang berlangsung",
       color: "text-green-600",
       bgColor: "bg-green-100 dark:bg-green-900/20",
     },
     {
-      title: "Total Siswa",
-      value: stats?.totalStudents || 0,
-      icon: Users,
-      description: "Siswa di kelas Anda",
-      color: "text-purple-600",
-      bgColor: "bg-purple-100 dark:bg-purple-900/20",
-    },
-    {
-      title: "Sesi Hari Ini",
-      value: stats?.todaySessions || 0,
-      icon: CalendarCheck,
-      description: "Sesi absensi",
+      title: "Pending Review",
+      value: pendingAttendances.length,
+      icon: Clock,
+      description: "Menunggu konfirmasi",
       color: "text-orange-600",
       bgColor: "bg-orange-100 dark:bg-orange-900/20",
     },
   ]
 
   return (
-    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       {cards.map((stat) => (
         <Card key={stat.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

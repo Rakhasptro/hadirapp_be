@@ -3,30 +3,20 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Save, Calendar } from 'lucide-react';
 import axios from '@/lib/axios';
+import { toast } from 'sonner';
 
 interface FormData {
-  courseId: string;
-  classId: string;
-  teacherId: string;
-  dayOfWeek: string;
+  courseName: string;
+  courseCode: string;
+  date: string;
   startTime: string;
   endTime: string;
   room: string;
-  wifiNetworkId: string;
-  isActive: boolean;
+  topic: string;
 }
-
-const dayOfWeekOptions = [
-  { value: 'MONDAY', label: 'Senin' },
-  { value: 'TUESDAY', label: 'Selasa' },
-  { value: 'WEDNESDAY', label: 'Rabu' },
-  { value: 'THURSDAY', label: 'Kamis' },
-  { value: 'FRIDAY', label: 'Jumat' },
-  { value: 'SATURDAY', label: 'Sabtu' },
-  { value: 'SUNDAY', label: 'Minggu' },
-];
 
 export default function ScheduleFormPage() {
   const navigate = useNavigate();
@@ -35,70 +25,44 @@ export default function ScheduleFormPage() {
 
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
-  const [courses, setCourses] = useState<any[]>([]);
-  const [classes, setClasses] = useState<any[]>([]);
-  const [teachers, setTeachers] = useState<any[]>([]);
-  const [wifiNetworks, setWifiNetworks] = useState<any[]>([]);
 
   const [formData, setFormData] = useState<FormData>({
-    courseId: '',
-    classId: '',
-    teacherId: '',
-    dayOfWeek: 'MONDAY',
+    courseName: '',
+    courseCode: '',
+    date: '',
     startTime: '',
     endTime: '',
     room: '',
-    wifiNetworkId: '',
-    isActive: true,
+    topic: '',
   });
 
   useEffect(() => {
-    fetchFormOptions();
     if (isEdit) {
       fetchSchedule();
     }
   }, [id]);
 
-  const fetchFormOptions = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const [coursesRes, classesRes, teachersRes, wifiRes] = await Promise.all([
-        axios.get('/admin/courses/list', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('/admin/classes/list', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('/admin/teachers/list', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('/admin/wifi/list', { headers: { Authorization: `Bearer ${token}` } }),
-      ]);
-      setCourses(coursesRes.data);
-      setClasses(classesRes.data);
-      setTeachers(teachersRes.data);
-      setWifiNetworks(wifiRes.data);
-    } catch (error) {
-      console.error('Error fetching form options:', error);
-      alert('Gagal memuat data form');
-    }
-  };
-
   const fetchSchedule = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`/admin/schedules/${id}`, {
+      const response = await axios.get(`/schedules/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const schedule = response.data;
       setFormData({
-        courseId: schedule.courseId,
-        classId: schedule.classId,
-        teacherId: schedule.teacherId,
-        dayOfWeek: schedule.dayOfWeek,
+        courseName: schedule.courseName,
+        courseCode: schedule.courseCode,
+        date: schedule.date,
         startTime: schedule.startTime,
         endTime: schedule.endTime,
         room: schedule.room || '',
-        wifiNetworkId: schedule.wifiNetworkId || '',
-        isActive: schedule.isActive,
+        topic: schedule.topic || '',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching schedule:', error);
-      alert('Gagal memuat data jadwal');
+      const message = error.response?.data?.message || 'Gagal memuat data jadwal. Silakan coba lagi.';
+      toast.error(message);
+      navigate('/schedules');
     } finally {
       setLoading(false);
     }
@@ -108,13 +72,13 @@ export default function ScheduleFormPage() {
     e.preventDefault();
 
     // Validation
-    if (!formData.courseId || !formData.classId || !formData.teacherId || !formData.startTime || !formData.endTime) {
-      alert('Harap isi semua field yang wajib');
+    if (!formData.courseName || !formData.courseCode || !formData.date || !formData.startTime || !formData.endTime) {
+      toast.error('Harap isi semua field yang wajib');
       return;
     }
 
     if (formData.startTime >= formData.endTime) {
-      alert('Waktu mulai harus lebih awal dari waktu selesai');
+      toast.error('Waktu mulai harus lebih awal dari waktu selesai');
       return;
     }
 
@@ -124,25 +88,26 @@ export default function ScheduleFormPage() {
       const token = localStorage.getItem('token');
       const payload = {
         ...formData,
-        wifiNetworkId: formData.wifiNetworkId || null,
         room: formData.room || null,
+        topic: formData.topic || null,
       };
 
       if (isEdit) {
-        await axios.put(`/admin/schedules/${id}`, payload, {
+        await axios.put(`/schedules/${id}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        alert('Jadwal berhasil diperbarui');
+        toast.success('Jadwal berhasil diperbarui');
       } else {
-        await axios.post('/admin/schedules', payload, {
+        await axios.post('/schedules', payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        alert('Jadwal berhasil dibuat');
+        toast.success('Jadwal berhasil dibuat');
       }
       navigate('/schedules');
     } catch (error: any) {
       console.error('Error saving schedule:', error);
-      alert(error.response?.data?.message || 'Gagal menyimpan jadwal');
+      const message = error.response?.data?.message || 'Gagal menyimpan jadwal. Silakan coba lagi.';
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -173,7 +138,7 @@ export default function ScheduleFormPage() {
         <div>
           <h1 className="text-3xl font-bold">{isEdit ? 'Edit Jadwal' : 'Tambah Jadwal'}</h1>
           <p className="text-muted-foreground mt-1">
-            {isEdit ? 'Perbarui informasi jadwal' : 'Buat jadwal pelajaran baru'}
+            {isEdit ? 'Perbarui informasi jadwal mengajar' : 'Buat jadwal mengajar baru'}
           </p>
         </div>
       </div>
@@ -186,86 +151,46 @@ export default function ScheduleFormPage() {
               <Calendar className="h-5 w-5" />
               Informasi Jadwal
             </CardTitle>
-            <CardDescription>Isi formulir di bawah untuk membuat atau mengubah jadwal</CardDescription>
+            <CardDescription>Isi formulir di bawah untuk membuat atau mengubah jadwal mengajar</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Mata Pelajaran */}
+            {/* Nama Mata Kuliah */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                Mata Pelajaran <span className="text-destructive">*</span>
+                Nama Mata Kuliah <span className="text-destructive">*</span>
               </label>
-              <select
-                className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                value={formData.courseId}
-                onChange={(e) => handleChange('courseId', e.target.value)}
+              <Input
+                placeholder="Contoh: Pemrograman Web"
+                value={formData.courseName}
+                onChange={(e) => handleChange('courseName', e.target.value)}
                 required
-              >
-                <option value="">Pilih Mata Pelajaran</option>
-                {courses.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.code} - {course.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
-            {/* Kelas */}
+            {/* Kode Mata Kuliah */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                Kelas <span className="text-destructive">*</span>
+                Kode Mata Kuliah <span className="text-destructive">*</span>
               </label>
-              <select
-                className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                value={formData.classId}
-                onChange={(e) => handleChange('classId', e.target.value)}
+              <Input
+                placeholder="Contoh: TI201"
+                value={formData.courseCode}
+                onChange={(e) => handleChange('courseCode', e.target.value)}
                 required
-              >
-                <option value="">Pilih Kelas</option>
-                {classes.map((cls) => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name} {cls.major ? `- ${cls.major}` : ''}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
-            {/* Guru */}
+            {/* Tanggal */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                Guru Pengajar <span className="text-destructive">*</span>
+                Tanggal <span className="text-destructive">*</span>
               </label>
-              <select
-                className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                value={formData.teacherId}
-                onChange={(e) => handleChange('teacherId', e.target.value)}
+              <Input
+                type="date"
+                value={formData.date}
+                onChange={(e) => handleChange('date', e.target.value)}
                 required
-              >
-                <option value="">Pilih Guru</option>
-                {teachers.map((teacher) => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {teacher.name} ({teacher.nip})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Hari */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Hari <span className="text-destructive">*</span>
-              </label>
-              <select
-                className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                value={formData.dayOfWeek}
-                onChange={(e) => handleChange('dayOfWeek', e.target.value)}
-                required
-              >
-                {dayOfWeekOptions.map((day) => (
-                  <option key={day.value} value={day.value}>
-                    {day.label}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             {/* Waktu */}
@@ -304,35 +229,15 @@ export default function ScheduleFormPage() {
               />
             </div>
 
-            {/* WiFi Network */}
+            {/* Topik */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Jaringan WiFi</label>
-              <select
-                className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                value={formData.wifiNetworkId}
-                onChange={(e) => handleChange('wifiNetworkId', e.target.value)}
-              >
-                <option value="">Tidak Ada</option>
-                {wifiNetworks.map((wifi) => (
-                  <option key={wifi.id} value={wifi.id}>
-                    {wifi.ssid}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Status */}
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="isActive"
-                checked={formData.isActive}
-                onChange={(e) => handleChange('isActive', e.target.checked)}
-                className="h-4 w-4"
+              <label className="text-sm font-medium">Topik Pembahasan</label>
+              <Textarea
+                placeholder="Contoh: Pengenalan React Hooks dan State Management"
+                value={formData.topic}
+                onChange={(e) => handleChange('topic', e.target.value)}
+                rows={3}
               />
-              <label htmlFor="isActive" className="text-sm font-medium cursor-pointer">
-                Jadwal Aktif
-              </label>
             </div>
 
             {/* Buttons */}

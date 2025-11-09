@@ -11,14 +11,7 @@ export function AuthPage() {
   useEffect(() => {
     // Redirect if already authenticated
     if (authService.isAuthenticated()) {
-      const user = authService.getUser();
-      if (user?.role === 'ADMIN') {
-        navigate('/admin/dashboard');
-      } else if (user?.role === 'TEACHER') {
-        navigate('/teacher/dashboard');
-      } else {
-        navigate('/student/dashboard');
-      }
+      navigate('/dashboard');
     }
   }, [navigate]);
 

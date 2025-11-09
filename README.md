@@ -1,230 +1,457 @@
-# HadirApp - Modern Attendance Management System
+# 📱 HadirApp - QR Code Attendance System# HadirApp - Modern Attendance Management System
 
-A comprehensive attendance management system built with NestJS (Backend) and React (Frontend), featuring role-based access control, real-time attendance tracking, and schedule management.
 
-## 🚀 Project Structure
 
-This is a monorepo containing two main applications:
+Sistem absensi modern berbasis QR Code untuk institusi pendidikan. Terdiri dari backend API (NestJS), web application untuk teacher, dan mobile app untuk student.A comprehensive attendance management system built with NestJS (Backend) and React (Frontend), featuring role-based access control, real-time attendance tracking, and schedule management.
 
-```
-hadirapp_db/
-├── HadirAPP/          # Backend (NestJS + Prisma)
-├── web/               # Frontend (React + TypeScript)
+
+
+## 🎯 Overview## 🚀 Project Structure
+
+
+
+HadirApp adalah solusi absensi yang efisien dengan fitur:This is a monorepo containing two main applications:
+
+- ✅ QR Code based attendance
+
+- ✅ Real-time attendance tracking```
+
+- ✅ Selfie verificationhadirapp_db/
+
+- ✅ Teacher dashboard untuk manajemen├── HadirAPP/          # Backend (NestJS + Prisma)
+
+- ✅ Mobile app untuk student├── web/               # Frontend (React + TypeScript)
+
 └── docs/              # Documentation files
-```
 
-## ✨ Features
+## 📂 Struktur Project```
 
-### Core Features
-- 🔐 **Authentication & Authorization** - JWT-based auth with role-based access control (ADMIN, TEACHER, STUDENT)
-- 📊 **Unified Dashboard** - Role-specific dashboard with dynamic content
-- ✅ **Attendance Management** - Real-time attendance tracking with QR code support
-- 📅 **Schedule Management** - Complete CRUD for class schedules with conflict detection
-- 👥 **User Management** - Manage students, teachers, and administrators
-- 📱 **Responsive Design** - Mobile-first design with dark mode support
 
-### Admin Features
+
+```## ✨ Features
+
+hadirapp_db/
+
+├── HadirAPP/          # Backend API (NestJS + Prisma + MySQL)### Core Features
+
+│   ├── src/- 🔐 **Authentication & Authorization** - JWT-based auth with role-based access control (ADMIN, TEACHER, STUDENT)
+
+│   ├── prisma/- 📊 **Unified Dashboard** - Role-specific dashboard with dynamic content
+
+│   └── README.md      # Backend documentation- ✅ **Attendance Management** - Real-time attendance tracking with QR code support
+
+│- 📅 **Schedule Management** - Complete CRUD for class schedules with conflict detection
+
+└── web/               # Teacher Web Dashboard (React + Vite)- 👥 **User Management** - Manage students, teachers, and administrators
+
+    ├── src/- 📱 **Responsive Design** - Mobile-first design with dark mode support
+
+    └── README.md      # Frontend documentation
+
+```### Admin Features
+
 - Dashboard with comprehensive statistics
-- Attendance session management
+
+## 🚀 Quick Start- Attendance session management
+
 - Schedule management with automatic conflict detection
-- User and class management
+
+### 1. Backend Setup- User and class management
+
 - Reports and analytics
 
-### Teacher Features
-- Personal schedule view
-- Attendance session creation
-- Student attendance tracking
-- Class management
+```bash
 
-### Student Features
-- Personal attendance history
-- Schedule viewing
+# Masuk ke folder backend### Teacher Features
+
+cd HadirAPP- Personal schedule view
+
+- Attendance session creation
+
+# Install dependencies- Student attendance tracking
+
+npm install- Class management
+
+
+
+# Setup database (.env)### Student Features
+
+DATABASE_URL="mysql://user:password@localhost:3306/hadirapp"- Personal attendance history
+
+JWT_SECRET="your-secret-key"- Schedule viewing
+
 - Leave request management
 
-## 🛠️ Tech Stack
+# Run migrations
 
-### Backend
-- **NestJS** - Progressive Node.js framework
-- **Prisma ORM** - Next-generation database toolkit
+npx prisma migrate dev## 🛠️ Tech Stack
+
+
+
+# Start server### Backend
+
+npm run start:dev- **NestJS** - Progressive Node.js framework
+
+```- **Prisma ORM** - Next-generation database toolkit
+
 - **MySQL** - Database
-- **JWT** - Authentication
+
+Backend akan berjalan di `http://localhost:3000`- **JWT** - Authentication
+
 - **TypeScript** - Type-safe development
+
+### 2. Web Dashboard Setup
 
 ### Frontend
-- **React 19** - UI library
-- **TypeScript** - Type-safe development
-- **Vite** - Build tool
+
+```bash- **React 19** - UI library
+
+# Masuk ke folder web- **TypeScript** - Type-safe development
+
+cd web- **Vite** - Build tool
+
 - **React Router v6** - Routing
-- **shadcn/ui** - UI components
-- **Tailwind CSS** - Styling
+
+# Install dependencies- **shadcn/ui** - UI components
+
+npm install- **Tailwind CSS** - Styling
+
 - **Axios** - HTTP client
 
-## 📦 Installation
+# Setup environment (.env)
 
-### Prerequisites
-- Node.js (v18 or higher)
-- MySQL (v8 or higher)
+echo "VITE_API_URL=http://localhost:3000/api" > .env## 📦 Installation
+
+
+
+# Start development server### Prerequisites
+
+npm run dev- Node.js (v18 or higher)
+
+```- MySQL (v8 or higher)
+
 - npm or yarn
+
+Web dashboard akan berjalan di `http://localhost:5173`
 
 ### Backend Setup
 
+## 🔑 Test Credentials
+
 ```bash
-cd HadirAPP
 
-# Install dependencies
-npm install
+```cd HadirAPP
 
-# Setup environment variables
-cp .env.example .env
-# Edit .env with your database credentials
+Teacher Account:
 
-# Generate Prisma Client
-npx prisma generate
+Email: teacher1@test.com# Install dependencies
 
-# Run migrations
-npx prisma migrate dev
+Password: password123npm install
 
-# Seed database (optional)
-npm run seed
-
-# Start development server
-npm run start:dev
 ```
 
-Backend will run on `http://localhost:3000`
+# Setup environment variables
+
+## 📱 Fitur Utamacp .env.example .env
+
+# Edit .env with your database credentials
+
+### Teacher (Web App)
+
+1. **Manajemen Jadwal**# Generate Prisma Client
+
+   - Create/Edit/Delete jadwal kuliahnpx prisma generate
+
+   - Generate QR Code otomatis
+
+   - Aktivasi/Deaktivasi QR Code# Run migrations
+
+   - Download QR Codenpx prisma migrate dev
+
+
+
+2. **Konfirmasi Kehadiran**# Seed database (optional)
+
+   - Review attendance submissionsnpm run seed
+
+   - View selfie mahasiswa
+
+   - Confirm/Reject attendance# Start development server
+
+npm run start:dev
+
+3. **Profile Management**```
+
+   - Update profile info
+
+   - Upload photoBackend will run on `http://localhost:3000`
+
+   - Change password
 
 ### Frontend Setup
 
-```bash
-cd web
+### Student (Mobile App)
 
-# Install dependencies
+1. **Scan QR Code**```bash
+
+   - Scan QR dari teachercd web
+
+   - Submit attendance dengan selfie
+
+   - View attendance history# Install dependencies
+
 npm install
 
-# Setup environment variables (if needed)
-cp .env.example .env
+2. **Profile**
 
-# Start development server
+   - View profile# Setup environment variables (if needed)
+
+   - Update infocp .env.example .env
+
+
+
+## 🛠️ Teknologi Stack# Start development server
+
 npm run dev
-```
 
-Frontend will run on `http://localhost:5173`
+### Backend```
 
-## 🔑 Default Credentials
+- NestJS (Node.js framework)
 
-After seeding the database:
+- Prisma ORMFrontend will run on `http://localhost:5173`
 
-**Admin:**
-- Email: `admin@school.com`
-- Password: `admin123`
+- MySQL Database
 
-**Teacher:**
-- Email: `teacher@school.com`
-- Password: `teacher123`
+- JWT Authentication## 🔑 Default Credentials
 
-**Student:**
+- Multer (File upload)
+
+- QRCode GeneratorAfter seeding the database:
+
+
+
+### Web Frontend**Admin:**
+
+- React 19 + Vite- Email: `admin@school.com`
+
+- TypeScript- Password: `admin123`
+
+- Tailwind CSS + shadcn/ui
+
+- React Router v7**Teacher:**
+
+- Axios- Email: `teacher@school.com`
+
+- Sonner (Toast notifications)- Password: `teacher123`
+
+
+
+## 📊 Database Schema**Student:**
+
 - Email: `student@school.com`
-- Password: `student123`
 
-## 📚 API Documentation
+```- Password: `student123`
 
-### Authentication
-```
+User → TeacherProfile / StudentProfile
+
+Teacher → Schedules (1:N)## 📚 API Documentation
+
+Schedule → Attendances (1:N)
+
+Student → Attendances (1:N)### Authentication
+
+``````
+
 POST /api/auth/login          - Login
-POST /api/auth/register       - Register new user
+
+## 🔄 QR Code WorkflowPOST /api/auth/register       - Register new user
+
 GET  /api/auth/profile        - Get current user profile
-```
 
-### Admin Endpoints
-```
-GET  /api/admin/stats                    - Dashboard statistics
-GET  /api/admin/attendance/sessions      - List attendance sessions
-GET  /api/admin/attendance/sessions/:id  - Session details
-GET  /api/admin/schedules                - List schedules
+``````
+
+1. Teacher creates schedule → QR Code generated (SCHEDULED)
+
+2. Teacher activates QR → Status: ACTIVE### Admin Endpoints
+
+3. Students scan QR → Submit attendance + selfie```
+
+4. Teacher reviews → Confirm/RejectGET  /api/admin/stats                    - Dashboard statistics
+
+5. Teacher closes QR → Status: CLOSEDGET  /api/admin/attendance/sessions      - List attendance sessions
+
+6. Can reactivate anytime → Status: ACTIVE againGET  /api/admin/attendance/sessions/:id  - Session details
+
+```GET  /api/admin/schedules                - List schedules
+
 POST /api/admin/schedules                - Create schedule
-PUT  /api/admin/schedules/:id            - Update schedule
+
+## 📡 API EndpointsPUT  /api/admin/schedules/:id            - Update schedule
+
 DELETE /api/admin/schedules/:id          - Delete schedule
+
+### Authentication```
+
+- `POST /api/auth/login`
+
+- `POST /api/auth/register`### Teacher Endpoints
+
 ```
 
-### Teacher Endpoints
-```
-GET  /api/teacher/stats                  - Teacher dashboard stats
-GET  /api/teacher/schedule               - My teaching schedule
-GET  /api/teacher/attendance/sessions    - My attendance sessions
-POST /api/teacher/attendance/sessions    - Create attendance session
-```
+### Schedules (Teacher)GET  /api/teacher/stats                  - Teacher dashboard stats
+
+- `GET /api/schedules`GET  /api/teacher/schedule               - My teaching schedule
+
+- `POST /api/schedules`GET  /api/teacher/attendance/sessions    - My attendance sessions
+
+- `PUT /api/schedules/:id`POST /api/teacher/attendance/sessions    - Create attendance session
+
+- `DELETE /api/schedules/:id````
+
+- `PATCH /api/schedules/:id/status`
 
 ## 🗄️ Database Schema
 
-Key entities:
-- **users** - User authentication
-- **students** - Student profiles
-- **teachers** - Teacher profiles
+### Attendance
+
+- `GET /api/attendance/pending` (Teacher)Key entities:
+
+- `POST /api/attendance/submit` (Student)- **users** - User authentication
+
+- `PATCH /api/attendance/:id/confirm` (Teacher)- **students** - Student profiles
+
+- `PATCH /api/attendance/:id/reject` (Teacher)- **teachers** - Teacher profiles
+
 - **classes** - School classes
-- **courses** - Subjects/courses
-- **schedules** - Class schedules
-- **attendance_sessions** - Attendance tracking sessions
-- **attendances** - Individual attendance records
+
+### Profile- **courses** - Subjects/courses
+
+- `GET /api/profile`- **schedules** - Class schedules
+
+- `PUT /api/profile`- **attendance_sessions** - Attendance tracking sessions
+
+- `POST /api/profile/photo`- **attendances** - Individual attendance records
+
 - **leave_requests** - Leave/absence requests
 
-## 🎨 UI Components
+### Public
 
-Built with shadcn/ui components:
+- `GET /api/public/schedules/verify/:qrCode` (No auth)## 🎨 UI Components
+
+
+
+## 🎨 ScreenshotsBuilt with shadcn/ui components:
+
 - Cards, Buttons, Inputs
-- Dropdowns, Modals, Toasts
-- Tables, Badges, Avatars
-- Dark mode support
-- Responsive design
+
+### Teacher Dashboard- Dropdowns, Modals, Toasts
+
+- Dashboard overview dengan statistik- Tables, Badges, Avatars
+
+- Jadwal list dengan QR Code- Dark mode support
+
+- QR Code activation/deactivation- Responsive design
+
+- Attendance confirmation
 
 ## 🔒 Security
 
-- JWT token-based authentication
-- Role-based access control (RBAC)
-- Password hashing with bcrypt
+### Mobile App (Coming Soon)
+
+- QR Scanner- JWT token-based authentication
+
+- Selfie capture- Role-based access control (RBAC)
+
+- Attendance history- Password hashing with bcrypt
+
 - Environment variable protection
-- CORS configuration
+
+## 📝 Development Status- CORS configuration
+
 - Input validation and sanitization
 
-## 📈 Development
+- ✅ Backend API (100% complete)
+
+- ✅ Web Dashboard (100% complete)## 📈 Development
+
+- ⏳ Mobile App (In development)
 
 ### Running Tests
-```bash
+
+## 🧪 Testing```bash
+
 # Backend tests
-cd HadirAPP
-npm run test
 
-# Frontend tests
-cd web
-npm run test
+### Backendcd HadirAPP
+
+```bashnpm run test
+
+cd HadirAPP
+
+npm run test# Frontend tests
+
+npm run test:e2ecd web
+
+```npm run test
+
 ```
 
-### Building for Production
-```bash
-# Backend
-cd HadirAPP
-npm run build
+### Frontend
 
-# Frontend
+```bash### Building for Production
+
+cd web```bash
+
+npm run build# Backend
+
+npm run previewcd HadirAPP
+
+```npm run build
+
+
+
+## 📖 Documentation# Frontend
+
 cd web
-npm run build
-```
+
+Untuk dokumentasi lengkap, lihat:npm run build
+
+- [Backend API Documentation](./HadirAPP/README.md)```
+
+- [Web Dashboard Documentation](./web/README.md)
+
+## 🤝 Contributing
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+Contributions are welcome! Please read the documentation before submitting PR.
+
 ## 📝 License
+
+## 👥 Team
 
 This project is licensed under the MIT License.
 
+HadirApp Development Team
+
 ## 👥 Authors
+
+## 📄 License
 
 - **Rakha Saputro** - Initial work
 
+MIT License
+
 ## 🙏 Acknowledgments
 
+---
+
 - NestJS team for the amazing framework
-- React team for the powerful library
+
+**Happy Coding! 🚀**- React team for the powerful library
+
 - shadcn for the beautiful UI components
 - All contributors and supporters
 
