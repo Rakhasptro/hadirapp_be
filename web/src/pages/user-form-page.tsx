@@ -331,8 +331,8 @@ export default function UserFormPage() {
                         <SelectValue placeholder="Pilih jenis kelamin" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="LAKI_LAKI">Laki-laki</SelectItem>
-                        <SelectItem value="PEREMPUAN">Perempuan</SelectItem>
+                        <SelectItem value="L">Laki-laki</SelectItem>
+                        <SelectItem value="P">Perempuan</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

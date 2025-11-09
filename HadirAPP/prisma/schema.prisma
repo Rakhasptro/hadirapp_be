@@ -161,7 +161,7 @@ model teachers {
   nip       String      @unique
   name      String
   email     String?
-  gender    String?
+  gender    String?     @db.Char(1)
   phone     String?
   address   String?     @db.Text
   photo     String?
