@@ -4,6 +4,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarGroupContent,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -19,8 +20,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { 
+  ChevronRight,
   ChevronsUpDown,
   User,
   Bell,
@@ -28,68 +36,25 @@ import {
   Settings,
   LayoutDashboard,
   CalendarCheck,
-  Calendar
+  Users,
+  GraduationCap,
+  BookOpen,
+  Calendar,
+  FileText,
+  BellRing,
+  Wifi,
+  UserCog
 } from "lucide-react"
-import { useNavigate, Outlet } from "react-router-dom"
+import { useNavigate, Outlet, useLocation } from "react-router-dom"
 import { ModeToggle } from "@/components/mode-toggle"
 import { authService } from "@/lib/auth"
-import { useState, useEffect } from "react"
-import axios from "@/lib/axios"
-
-interface TeacherProfile {
-  id: string
-  name: string
-  nip: string
-  email: string | null
-  gender: string | null
-  phone: string | null
-  address: string | null
-  photo: string | null
-}
-
-interface UserProfile {
-  id: string
-  email: string
-  role: 'ADMIN' | 'TEACHER' | 'STUDENT'
-  profile: TeacherProfile | any
-}
 
 export function MainLayout() {
   const navigate = useNavigate()
+  const location = useLocation()
   const user = authService.getUser()
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-
-  useEffect(() => {
-    fetchUserProfile()
-    
-    // Listen for profile updates
-    const handleProfileUpdate = () => {
-      fetchUserProfile()
-    }
-    
-    window.addEventListener('profileUpdated', handleProfileUpdate)
-    
-    return () => {
-      window.removeEventListener('profileUpdated', handleProfileUpdate)
-    }
-  }, [])
-
-  const fetchUserProfile = async () => {
-    try {
-      const response = await axios.get('/profile')
-      setUserProfile(response.data.user)
-    } catch (error) {
-      console.error('Failed to fetch user profile:', error)
-    }
-  }
-
-  const getPhotoUrl = (photo: string | null) => {
-    if (!photo) return null
-    if (photo.startsWith('http')) return photo
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-    const apiBaseURL = baseURL.replace('/api', '')
-    return `${apiBaseURL}${photo}`
-  }
+  const isAdmin = user?.role === 'ADMIN'
+  const isTeacher = user?.role === 'TEACHER'
 
   const handleLogout = () => {
     authService.logout()
@@ -98,37 +63,32 @@ export function MainLayout() {
 
   const getUserInitials = () => {
     if (!user) return 'U'
-    if (userProfile?.role === 'TEACHER' && userProfile?.profile?.name) {
-      return userProfile.profile.name
-        .split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
-    }
     return user.email.substring(0, 2).toUpperCase()
   }
 
-  const getDisplayName = () => {
-    if (userProfile?.role === 'TEACHER' && userProfile?.profile?.name) {
-      return userProfile.profile.name
-    }
-    return user?.email || 'User'
+  const isActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(path + '/')
   }
 
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar collapsible="icon">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Calendar className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">HadirApp</span>
-                  <span className="truncate text-xs">Sistem Kehadiran QR</span>
+              <SidebarMenuButton
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                asChild
+              >
+                <div className="flex items-center gap-2">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                    <GraduationCap className="size-4" />
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">HadirApp</span>
+                    <span className="truncate text-xs">{user?.role || 'User'}</span>
+                  </div>
                 </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -136,32 +96,263 @@ export function MainLayout() {
         </SidebarHeader>
         
         <SidebarContent>
-          {/* TEACHER Menu - New QR-based system */}
-          <SidebarGroup>
-            <SidebarGroupLabel>Menu Utama</SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Dashboard" onClick={() => navigate('/dashboard')}>
-                  <LayoutDashboard className="size-4" />
-                  <span>Dashboard</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+          {/* ADMIN Menu */}
+          {isAdmin && (
+            <>
+              <Collapsible defaultOpen className="group/collapsible">
+                <SidebarGroup>
+                  <SidebarGroupLabel asChild>
+                    <CollapsibleTrigger>
+                      Menu Utama
+                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                    </CollapsibleTrigger>
+                  </SidebarGroupLabel>
+                  <CollapsibleContent>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            tooltip="Dashboard" 
+                            onClick={() => navigate('/admin/dashboard')}
+                            isActive={isActive('/admin/dashboard')}
+                          >
+                            <LayoutDashboard />
+                            <span>Dashboard</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            tooltip="Attendance" 
+                            onClick={() => navigate('/attendance/sessions')}
+                            isActive={isActive('/attendance')}
+                          >
+                            <CalendarCheck />
+                            <span>Kehadiran</span>
+                            <Badge variant="secondary" className="ml-auto">5</Badge>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            tooltip="Schedules" 
+                            onClick={() => navigate('/schedules')}
+                            isActive={isActive('/schedules')}
+                          >
+                            <Calendar />
+                            <span>Jadwal</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton tooltip="Leave">
+                            <FileText />
+                            <span>Izin/Cuti</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton tooltip="Notifications">
+                            <BellRing />
+                            <span>Notifikasi</span>
+                            <Badge variant="destructive" className="ml-auto">3</Badge>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </CollapsibleContent>
+                </SidebarGroup>
+              </Collapsible>
               
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Schedules" onClick={() => navigate('/schedules')}>
-                  <Calendar className="size-4" />
-                  <span>Jadwal & QR Code</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <Collapsible defaultOpen className="group/collapsible">
+                <SidebarGroup>
+                  <SidebarGroupLabel asChild>
+                    <CollapsibleTrigger>
+                      Manajemen
+                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                    </CollapsibleTrigger>
+                  </SidebarGroupLabel>
+                  <CollapsibleContent>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton tooltip="Users">
+                            <Users />
+                            <span>Pengguna</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton tooltip="Teachers">
+                            <GraduationCap />
+                            <span>Guru</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton tooltip="Classes">
+                            <BookOpen />
+                            <span>Kelas</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton tooltip="Courses">
+                            <BookOpen />
+                            <span>Mata Pelajaran</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </CollapsibleContent>
+                </SidebarGroup>
+              </Collapsible>
               
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Pending Attendances" onClick={() => navigate('/attendance/pending')}>
-                  <CalendarCheck className="size-4" />
-                  <span>Konfirmasi Kehadiran</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
+              <Collapsible className="group/collapsible">
+                <SidebarGroup>
+                  <SidebarGroupLabel asChild>
+                    <CollapsibleTrigger>
+                      Sistem
+                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                    </CollapsibleTrigger>
+                  </SidebarGroupLabel>
+                  <CollapsibleContent>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton tooltip="WiFi Management">
+                            <Wifi />
+                            <span>WiFi</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton tooltip="Admin">
+                            <UserCog />
+                            <span>Admin</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton tooltip="Settings">
+                            <Settings />
+                            <span>Pengaturan</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </CollapsibleContent>
+                </SidebarGroup>
+              </Collapsible>
+            </>
+          )}
+
+          {/* TEACHER Menu */}
+          {isTeacher && (
+            <>
+              <Collapsible defaultOpen className="group/collapsible">
+                <SidebarGroup>
+                  <SidebarGroupLabel asChild>
+                    <CollapsibleTrigger>
+                      Menu Utama
+                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                    </CollapsibleTrigger>
+                  </SidebarGroupLabel>
+                  <CollapsibleContent>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            tooltip="Dashboard" 
+                            onClick={() => navigate('/teacher/dashboard')}
+                            isActive={isActive('/teacher/dashboard')}
+                          >
+                            <LayoutDashboard />
+                            <span>Dashboard</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            tooltip="My Schedule" 
+                            onClick={() => navigate('/schedules')}
+                            isActive={isActive('/schedules')}
+                          >
+                            <Calendar />
+                            <span>Jadwal Mengajar</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            tooltip="My Classes"
+                            isActive={isActive('/classes')}
+                          >
+                            <BookOpen />
+                            <span>Kelas Saya</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            tooltip="Attendance" 
+                            onClick={() => navigate('/attendance/pending')}
+                            isActive={isActive('/attendance')}
+                          >
+                            <CalendarCheck />
+                            <span>Validasi Kehadiran</span>
+                            <Badge variant="secondary" className="ml-auto">8</Badge>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </CollapsibleContent>
+                </SidebarGroup>
+              </Collapsible>
+              
+              <Collapsible defaultOpen className="group/collapsible">
+                <SidebarGroup>
+                  <SidebarGroupLabel asChild>
+                    <CollapsibleTrigger>
+                      Lainnya
+                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                    </CollapsibleTrigger>
+                  </SidebarGroupLabel>
+                  <CollapsibleContent>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton tooltip="Leave Requests">
+                            <FileText />
+                            <span>Izin Siswa</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton tooltip="Notifications">
+                            <BellRing />
+                            <span>Notifikasi</span>
+                            <Badge variant="destructive" className="ml-auto">2</Badge>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            tooltip="Profile" 
+                            onClick={() => navigate('/profile')}
+                            isActive={isActive('/profile')}
+                          >
+                            <User />
+                            <span>Profil Saya</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </CollapsibleContent>
+                </SidebarGroup>
+              </Collapsible>
+            </>
+          )}
         </SidebarContent>
         
         <SidebarFooter>
@@ -174,18 +365,12 @@ export function MainLayout() {
                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   >
                     <Avatar className="h-8 w-8 rounded-lg">
-                      {userProfile?.role === 'TEACHER' && userProfile?.profile?.photo ? (
-                        <AvatarImage 
-                          src={getPhotoUrl(userProfile.profile.photo) || undefined} 
-                          alt={userProfile.profile.name} 
-                        />
-                      ) : null}
                       <AvatarFallback className="rounded-lg">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">{getDisplayName()}</span>
+                      <span className="truncate font-semibold">{user?.email}</span>
                       <span className="truncate text-xs">{user?.role}</span>
                     </div>
                     <ChevronsUpDown className="ml-auto size-4" />

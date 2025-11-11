@@ -2,8 +2,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthPage } from '@/pages/auth-page';
 import { ProfilePage } from '@/pages/profile-page';
 import { DashboardContent } from '@/pages/dashboard-content';
-import SchedulesPage from '@/pages/schedules-page';
-import ScheduleFormPage from '@/pages/schedule-form-page';
+import AttendanceSessionsPage from '@/pages/attendance-sessions-page';
+import SessionDetailPage from '@/pages/session-detail-page';
+import TeacherDashboard from '@/pages/teacher-dashboard';
+import SchedulesListPage from '@/pages/schedules-list-page';
+import CreateSchedulePage from '@/pages/create-schedule-page';
+import ScheduleDetailPage from '@/pages/schedule-detail-page';
 import PendingAttendancesPage from '@/pages/pending-attendances-page';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { MainLayout } from '@/components/layout/main-layout';
@@ -36,27 +40,57 @@ export function AppRouter() {
             </ProtectedRoute>
           }
         >
-          {/* Dashboard */}
-          <Route path="/dashboard" element={<DashboardContent />} />
+          {/* Dashboard - Redirect to role-specific dashboard */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <Navigate 
+                to={
+                  authService.getUser()?.role === 'TEACHER' 
+                    ? '/teacher/dashboard' 
+                    : authService.getUser()?.role === 'ADMIN'
+                    ? '/admin/dashboard'
+                    : '/student/dashboard'
+                } 
+                replace 
+              />
+            } 
+          />
+          
+          {/* Role-specific Dashboards */}
+          <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+          <Route path="/admin/dashboard" element={<DashboardContent />} />
+          <Route path="/student/dashboard" element={<DashboardContent />} />
           
           {/* Profile */}
           <Route path="/profile" element={<ProfilePage />} />
           
-          {/* Schedules */}
-          <Route path="/schedules" element={<SchedulesPage />} />
-          <Route path="/schedules/create" element={<ScheduleFormPage />} />
-          <Route path="/schedules/edit/:id" element={<ScheduleFormPage />} />
-          
           {/* Attendance */}
+          <Route path="/attendance/sessions" element={<AttendanceSessionsPage />} />
+          <Route path="/attendance/sessions/:id" element={<SessionDetailPage />} />
           <Route path="/attendance/pending" element={<PendingAttendancesPage />} />
+          
+          {/* Schedules - QR-based */}
+          <Route path="/schedules" element={<SchedulesListPage />} />
+          <Route path="/schedules/create" element={<CreateSchedulePage />} />
+          <Route path="/schedules/:id" element={<ScheduleDetailPage />} />
         </Route>
         
-        {/* Default redirect */}
+        {/* Default redirect based on role */}
         <Route
           path="/"
           element={
             authService.isAuthenticated() ? (
-              <Navigate to="/dashboard" replace />
+              <Navigate 
+                to={
+                  authService.getUser()?.role === 'TEACHER' 
+                    ? '/teacher/dashboard' 
+                    : authService.getUser()?.role === 'ADMIN'
+                    ? '/admin/dashboard'
+                    : '/student/dashboard'
+                } 
+                replace 
+              />
             ) : (
               <Navigate to="/login" replace />
             )

@@ -1,45 +1,37 @@
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Clock, Image as ImageIcon } from 'lucide-react';
-import axios from '@/lib/axios';
-import { toast } from 'sonner';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-
-interface Attendance {
-  id: string;
-  studentName: string;
-  studentNpm: string;
-  selfieImage: string;
-  status: string;
-  submittedAt: string;
-  schedule: {
-    courseName: string;
-    courseCode: string;
-    date: string;
-    startTime: string;
-    endTime: string;
-    room: string;
-  };
-}
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { 
+  CheckCircle, 
+  XCircle, 
+  Search, 
+  Loader2,
+  Calendar,
+  Clock,
+  ExternalLink
+} from 'lucide-react';
+import { attendanceService, Attendance } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PendingAttendancesPage() {
-  const [attendances, setAttendances] = useState<Attendance[]>([]);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
   const [loading, setLoading] = useState(true);
-  const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
-  const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState('');
-  const [actionLoading, setActionLoading] = useState(false);
+  const [attendances, setAttendances] = useState<Attendance[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState<string>('all');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPendingAttendances();
@@ -48,12 +40,15 @@ export default function PendingAttendancesPage() {
   const fetchPendingAttendances = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/attendance/pending');
-      setAttendances(response.data);
+      const data = await attendanceService.getPendingAttendances();
+      setAttendances(data);
     } catch (error: any) {
       console.error('Error fetching attendances:', error);
-      const message = error.response?.data?.message || 'Gagal memuat data kehadiran. Silakan coba lagi.';
-      toast.error(message);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.message || 'Gagal memuat data',
+      });
     } finally {
       setLoading(false);
     }
@@ -61,179 +56,197 @@ export default function PendingAttendancesPage() {
 
   const handleConfirm = async (id: string) => {
     try {
-      setActionLoading(true);
-      await axios.patch(`/attendance/${id}/confirm`);
-      toast.success('Kehadiran berhasil dikonfirmasi');
-      fetchPendingAttendances();
+      await attendanceService.confirmAttendance(id);
+      toast({
+        title: 'Berhasil',
+        description: 'Kehadiran telah dikonfirmasi',
+      });
+      fetchPendingAttendances(); // Refresh
     } catch (error: any) {
-      console.error('Error confirming attendance:', error);
-      const message = error.response?.data?.message || 'Gagal mengkonfirmasi kehadiran. Silakan coba lagi.';
-      toast.error(message);
-    } finally {
-      setActionLoading(false);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.message || 'Gagal mengkonfirmasi',
+      });
     }
   };
 
-  const handleReject = async () => {
-    if (!selectedAttendance || !rejectionReason.trim()) {
-      toast.error('Alasan penolakan harus diisi');
-      return;
-    }
+  const handleReject = async (id: string) => {
+    const reason = prompt('Alasan penolakan:');
+    if (!reason) return;
 
     try {
-      setActionLoading(true);
-      await axios.patch(`/attendance/${selectedAttendance.id}/reject`, {
-        reason: rejectionReason,
+      await attendanceService.rejectAttendance(id, reason);
+      toast({
+        title: 'Berhasil',
+        description: 'Kehadiran telah ditolak',
       });
-      toast.success('Kehadiran berhasil ditolak');
-      setShowRejectDialog(false);
-      setRejectionReason('');
-      setSelectedAttendance(null);
-      fetchPendingAttendances();
+      fetchPendingAttendances(); // Refresh
     } catch (error: any) {
-      console.error('Error rejecting attendance:', error);
-      const message = error.response?.data?.message || 'Gagal menolak kehadiran. Silakan coba lagi.';
-      toast.error(message);
-    } finally {
-      setActionLoading(false);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.message || 'Gagal menolak',
+      });
     }
   };
 
-  const getSelfieUrl = (filename: string) => {
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-    const apiBaseURL = baseURL.replace('/api', '');
-    return `${apiBaseURL}/uploads/selfies/${filename}`;
-  };
+  const filteredAttendances = attendances.filter((att) => {
+    const matchesSearch =
+      att.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      att.studentNpm.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      att.schedule?.courseName?.toLowerCase().includes(searchQuery.toLowerCase());
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const attDate = new Date(att.scannedAt);
+    attDate.setHours(0, 0, 0, 0);
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+    let matchesDate = true;
+    if (dateFilter === 'today') {
+      matchesDate = attDate.getTime() === today.getTime();
+    } else if (dateFilter === 'week') {
+      const weekAgo = new Date(today);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      matchesDate = attDate >= weekAgo;
+    }
+
+    return matchesSearch && matchesDate;
+  });
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Clock className="h-8 w-8 animate-spin mx-auto mb-2" />
-          <p>Memuat data...</p>
-        </div>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container max-w-7xl py-6">
+      {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Kehadiran Pending</h1>
-        <p className="text-muted-foreground">
-          Konfirmasi atau tolak kehadiran mahasiswa
+        <h1 className="text-3xl font-bold">Kehadiran Perlu Validasi</h1>
+        <p className="text-muted-foreground mt-1">
+          Total {filteredAttendances.length} kehadiran menunggu konfirmasi
         </p>
       </div>
 
-      {attendances.length === 0 ? (
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari nama, NPM, atau mata kuliah..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger className="w-full md:w-[200px]">
+                <SelectValue placeholder="Filter Tanggal" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Tanggal</SelectItem>
+                <SelectItem value="today">Hari Ini</SelectItem>
+                <SelectItem value="week">Minggu Ini</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Attendances List */}
+      {filteredAttendances.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-10">
-            <CheckCircle className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium">Tidak ada kehadiran pending</p>
-            <p className="text-sm text-muted-foreground">
-              Semua kehadiran sudah dikonfirmasi
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Semua Sudah Tervalidasi!</h3>
+            <p className="text-muted-foreground text-center">
+              Tidak ada kehadiran yang perlu dikonfirmasi saat ini
             </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {attendances.map((attendance) => (
-            <Card key={attendance.id} className="overflow-hidden">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">
-                      {attendance.studentName}
-                    </CardTitle>
-                    <CardDescription>{attendance.studentNpm}</CardDescription>
-                  </div>
-                  <Badge variant="secondary">
-                    <Clock className="h-3 w-3 mr-1" />
-                    Pending
-                  </Badge>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                {/* Selfie Image */}
-                <div className="relative aspect-square w-full overflow-hidden rounded-lg border bg-muted">
-                  {attendance.selfieImage ? (
+        <div className="space-y-4">
+          {filteredAttendances.map((attendance) => (
+            <Card key={attendance.id}>
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  {/* Selfie Image */}
+                  <div className="flex-shrink-0">
                     <img
-                      src={getSelfieUrl(attendance.selfieImage)}
-                      alt="Selfie"
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '';
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
+                      src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${attendance.selfieImage}`}
+                      alt={attendance.studentName}
+                      className="w-24 h-24 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setSelectedImage(`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${attendance.selfieImage}`)}
                     />
-                  ) : (
-                    <div className="flex h-full items-center justify-center">
-                      <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="font-bold text-lg">{attendance.studentName}</h3>
+                        <p className="text-sm text-muted-foreground">{attendance.studentNpm}</p>
+                      </div>
+                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                        Pending
+                      </Badge>
                     </div>
-                  )}
-                </div>
 
-                {/* Schedule Info */}
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <p className="font-medium">{attendance.schedule.courseName}</p>
-                    <p className="text-muted-foreground">
-                      {attendance.schedule.courseCode}
-                    </p>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{attendance.schedule?.courseName}</span>
+                        <span className="text-muted-foreground">({attendance.schedule?.courseCode})</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>
+                          Scan: {new Date(attendance.scannedAt).toLocaleDateString('id-ID', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                          {' '}
+                          pukul {new Date(attendance.scannedAt).toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                        </span>
+                      </div>
+                    </div>                    {/* Actions */}
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        onClick={() => handleConfirm(attendance.id)}
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Konfirmasi
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleReject(attendance.id)}
+                      >
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Tolak
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(`/schedules/${attendance.scheduleId}`)}
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Lihat Jadwal
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <span>{attendance.schedule.room}</span>
-                    <span>•</span>
-                    <span>
-                      {attendance.schedule.startTime} - {attendance.schedule.endTime}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Submitted: {formatTime(attendance.submittedAt)}
-                  </p>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2">
-                  <Button
-                    className="flex-1"
-                    size="sm"
-                    onClick={() => handleConfirm(attendance.id)}
-                    disabled={actionLoading}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-1" />
-                    Konfirmasi
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => {
-                      setSelectedAttendance(attendance);
-                      setShowRejectDialog(true);
-                    }}
-                    disabled={actionLoading}
-                  >
-                    <XCircle className="h-4 w-4 mr-1" />
-                    Tolak
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -241,50 +254,21 @@ export default function PendingAttendancesPage() {
         </div>
       )}
 
-      {/* Reject Dialog */}
-      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Tolak Kehadiran</DialogTitle>
-            <DialogDescription>
-              Berikan alasan penolakan untuk mahasiswa{' '}
-              {selectedAttendance?.studentName}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2">
-            <Label htmlFor="reason">Alasan Penolakan</Label>
-            <Textarea
-              id="reason"
-              placeholder="Contoh: Selfie tidak jelas, bukan orang yang bersangkutan, dll"
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              rows={4}
+      {/* Image Modal */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="max-w-4xl max-h-full">
+            <img
+              src={selectedImage}
+              alt="Selfie Preview"
+              className="max-w-full max-h-[90vh] rounded-lg"
             />
           </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowRejectDialog(false);
-                setRejectionReason('');
-                setSelectedAttendance(null);
-              }}
-              disabled={actionLoading}
-            >
-              Batal
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleReject}
-              disabled={actionLoading || !rejectionReason.trim()}
-            >
-              {actionLoading ? 'Memproses...' : 'Tolak'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }

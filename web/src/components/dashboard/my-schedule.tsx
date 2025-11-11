@@ -1,45 +1,35 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, BookOpen, Calendar } from "lucide-react"
+import { Clock, Calendar } from "lucide-react"
 import { useState, useEffect } from "react"
-import axios from "@/lib/axios"
-
-interface Schedule {
-  id: string
-  courseName: string
-  courseCode: string
-  date: string
-  startTime: string
-  endTime: string
-  room: string | null
-  topic: string | null
-  status: 'SCHEDULED' | 'ACTIVE' | 'CLOSED'
-}
+import { scheduleService, Schedule } from "@/lib/api"
+import { useNavigate } from "react-router-dom"
+import { Button } from "@/components/ui/button"
 
 export function MySchedule() {
+  const navigate = useNavigate()
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchSchedules = async () => {
       try {
-        const response = await axios.get('/schedules')
-        // Filter untuk jadwal minggu ini saja
+        const allSchedules = await scheduleService.getMySchedules()
+        
+        // Filter upcoming schedules (today and future, active only)
         const today = new Date()
-        const weekFromNow = new Date(today)
-        weekFromNow.setDate(today.getDate() + 7)
+        today.setHours(0, 0, 0, 0)
         
-        const filtered = response.data.filter((schedule: Schedule) => {
-          const scheduleDate = new Date(schedule.date)
-          return scheduleDate >= today && scheduleDate <= weekFromNow
-        })
+        const upcomingSchedules = allSchedules
+          .filter(schedule => {
+            const scheduleDate = new Date(schedule.date)
+            scheduleDate.setHours(0, 0, 0, 0)
+            return scheduleDate >= today && schedule.status === 'ACTIVE'
+          })
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          .slice(0, 5) // Show only next 5
         
-        // Sort by date
-        filtered.sort((a: Schedule, b: Schedule) => 
-          new Date(a.date).getTime() - new Date(b.date).getTime()
-        )
-        
-        setSchedules(filtered)
+        setSchedules(upcomingSchedules)
       } catch (error) {
         console.error('Failed to fetch schedules:', error)
       } finally {
@@ -50,32 +40,11 @@ export function MySchedule() {
     fetchSchedules()
   }, [])
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('id-ID', { 
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
-    })
-  }
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return <Badge className="bg-green-600 text-white">Aktif</Badge>
-      case 'CLOSED':
-        return <Badge variant="destructive">Ditutup</Badge>
-      default:
-        return <Badge variant="secondary">Terjadwal</Badge>
-    }
-  }
-
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Jadwal Minggu Ini</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Jadwal Mendatang</CardTitle>
           <CardDescription className="text-xs sm:text-sm">
             Memuat data...
           </CardDescription>
@@ -87,22 +56,37 @@ export function MySchedule() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base sm:text-lg">Jadwal Minggu Ini</CardTitle>
-        <CardDescription className="text-xs sm:text-sm">
-          {schedules.length} jadwal dalam 7 hari ke depan
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-base sm:text-lg">Jadwal Mendatang</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              {schedules.length === 0 
+                ? 'Tidak ada jadwal' 
+                : `${schedules.length} jadwal terdekat`
+              }
+            </CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/schedules/create')}
+          >
+            Buat Jadwal
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {schedules.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
-            Tidak ada jadwal untuk minggu ini
+            Tidak ada jadwal mendatang
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {schedules.map((schedule) => (
               <div
                 key={schedule.id}
-                className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                onClick={() => navigate(`/schedules/${schedule.id}`)}
               >
                 <div className="space-y-1 min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -112,29 +96,31 @@ export function MySchedule() {
                     <Badge variant="outline" className="text-[10px] sm:text-xs flex-shrink-0">
                       {schedule.courseCode}
                     </Badge>
-                    {getStatusBadge(schedule.status)}
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    {schedule.topic}
+                  </p>
                   <div className="flex flex-wrap items-center gap-3 text-[10px] sm:text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      <span>{formatDate(schedule.date)}</span>
+                      <span>
+                        {new Date(schedule.date).toLocaleDateString('id-ID', {
+                          weekday: 'short',
+                          day: 'numeric',
+                          month: 'short'
+                        })}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       <span>{schedule.startTime} - {schedule.endTime}</span>
                     </div>
                     {schedule.room && (
-                      <div className="flex items-center gap-1">
-                        <BookOpen className="h-3 w-3" />
-                        <span>{schedule.room}</span>
-                      </div>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {schedule.room}
+                      </Badge>
                     )}
                   </div>
-                  {schedule.topic && (
-                    <p className="text-xs text-muted-foreground italic">
-                      Topik: {schedule.topic}
-                    </p>
-                  )}
                 </div>
               </div>
             ))}
