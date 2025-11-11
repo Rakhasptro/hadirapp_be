@@ -16,7 +16,7 @@ export interface Schedule {
   topic: string;
   qrCode: string;
   qrCodeImage: string;
-  status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  status: 'SCHEDULED' | 'ACTIVE' | 'CLOSED';
   createdAt: string;
   teacher?: {
     id: string;
@@ -36,7 +36,7 @@ export interface CreateScheduleDto {
 }
 
 export interface UpdateScheduleDto extends Partial<CreateScheduleDto> {
-  status?: 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  status?: 'SCHEDULED' | 'ACTIVE' | 'CLOSED';
 }
 
 export interface Attendance {
@@ -94,10 +94,19 @@ export const scheduleService = {
 
   /**
    * Update schedule
-   * PATCH /api/schedules/:id
+   * PUT /api/schedules/:id
    */
   async updateSchedule(id: string, data: UpdateScheduleDto): Promise<Schedule> {
-    const response = await axios.patch<Schedule>(`/schedules/${id}`, data);
+    const response = await axios.put<Schedule>(`/schedules/${id}`, data);
+    return response.data;
+  },
+
+  /**
+   * Update schedule status only
+   * PATCH /api/schedules/:id/status
+   */
+  async updateScheduleStatus(id: string, status: 'SCHEDULED' | 'ACTIVE' | 'CLOSED'): Promise<Schedule> {
+    const response = await axios.patch<Schedule>(`/schedules/${id}/status`, { status });
     return response.data;
   },
 

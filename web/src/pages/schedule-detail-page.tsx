@@ -136,10 +136,10 @@ export default function ScheduleDetailPage() {
     
     setTogglingStatus(true);
     try {
-      // Toggle between ACTIVE and CANCELLED
-      const newStatus: 'ACTIVE' | 'CANCELLED' = schedule.status === 'ACTIVE' ? 'CANCELLED' : 'ACTIVE';
+      // Toggle between ACTIVE and SCHEDULED
+      const newStatus: 'ACTIVE' | 'SCHEDULED' = schedule.status === 'ACTIVE' ? 'SCHEDULED' : 'ACTIVE'
       
-      await scheduleService.updateSchedule(schedule.id, { status: newStatus });
+      await scheduleService.updateScheduleStatus(schedule.id, newStatus)
       
       // Update local state
       setSchedule({ ...schedule, status: newStatus });
@@ -217,24 +217,26 @@ export default function ScheduleDetailPage() {
             <Badge 
               variant={
                 schedule.status === 'ACTIVE' ? 'default' : 
-                schedule.status === 'CANCELLED' ? 'secondary' : 
+                schedule.status === 'SCHEDULED' ? 'secondary' : 
                 'outline'
               }
               className={
                 schedule.status === 'ACTIVE' ? 'bg-green-500 hover:bg-green-600' :
-                schedule.status === 'CANCELLED' ? 'bg-gray-500' : ''
+                schedule.status === 'SCHEDULED' ? 'bg-gray-500' : 
+                'bg-orange-500'
               }
             >
               {schedule.status === 'ACTIVE' && <QrCode className="h-3 w-3 mr-1" />}
-              {schedule.status === 'CANCELLED' && <Ban className="h-3 w-3 mr-1" />}
+              {schedule.status === 'SCHEDULED' && <Ban className="h-3 w-3 mr-1" />}
+              {schedule.status === 'CLOSED' && <CheckCircle className="h-3 w-3 mr-1" />}
               {schedule.status}
             </Badge>
             <Button
               variant={schedule.status === 'ACTIVE' ? 'destructive' : 'default'}
               size="sm"
               onClick={handleToggleStatus}
-              disabled={togglingStatus || schedule.status === 'COMPLETED'}
-              className={schedule.status !== 'ACTIVE' && schedule.status !== 'COMPLETED' ? 'bg-green-500 hover:bg-green-600' : ''}
+              disabled={togglingStatus || schedule.status === 'CLOSED'}
+              className={schedule.status !== 'ACTIVE' && schedule.status !== 'CLOSED' ? 'bg-green-500 hover:bg-green-600' : ''}
             >
               {togglingStatus ? (
                 <>
@@ -246,7 +248,7 @@ export default function ScheduleDetailPage() {
                   <Ban className="mr-2 h-4 w-4" />
                   Nonaktifkan QR
                 </>
-              ) : schedule.status === 'COMPLETED' ? (
+              ) : schedule.status === 'CLOSED' ? (
                 <>
                   <CheckCircle className="mr-2 h-4 w-4" />
                   Selesai

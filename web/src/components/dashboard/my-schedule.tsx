@@ -17,7 +17,7 @@ export function MySchedule() {
     try {
       const allSchedules = await scheduleService.getMySchedules()
       
-      // Filter upcoming schedules (today and future, show both ACTIVE and CANCELLED)
+      // Filter upcoming schedules (today and future, show both ACTIVE and SCHEDULED)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       
@@ -25,8 +25,8 @@ export function MySchedule() {
         .filter(schedule => {
           const scheduleDate = new Date(schedule.date)
           scheduleDate.setHours(0, 0, 0, 0)
-          // Show schedules that are ACTIVE or CANCELLED (not COMPLETED)
-          return scheduleDate >= today && schedule.status !== 'COMPLETED'
+          // Show schedules that are ACTIVE or SCHEDULED (not CLOSED)
+          return scheduleDate >= today && schedule.status !== 'CLOSED'
         })
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .slice(0, 5) // Show only next 5
@@ -44,11 +44,11 @@ export function MySchedule() {
     
     setTogglingId(scheduleId)
     try {
-      // Toggle between ACTIVE and CANCELLED
-      const newStatus: 'ACTIVE' | 'CANCELLED' = currentStatus === 'ACTIVE' ? 'CANCELLED' : 'ACTIVE'
+      // Toggle between ACTIVE and SCHEDULED
+      const newStatus: 'ACTIVE' | 'SCHEDULED' = currentStatus === 'ACTIVE' ? 'SCHEDULED' : 'ACTIVE'
       
-      // Use updateSchedule endpoint with status
-      await scheduleService.updateSchedule(scheduleId, { status: newStatus })
+      // Use updateScheduleStatus endpoint
+      await scheduleService.updateScheduleStatus(scheduleId, newStatus)
       
       // Update local state
       setSchedules(prevSchedules =>
