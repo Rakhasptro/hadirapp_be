@@ -1,51 +1,37 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Users } from "lucide-react"
+import { Clock, QrCode } from "lucide-react"
 import { useEffect, useState } from "react"
-import axios from "@/lib/axios"
-
-interface Session {
-  id: string
-  className: string
-  subject: string
-  teacher: string
-  startTime: string
-  endTime: string
-  studentsPresent: number
-  totalStudents: number
-  room?: string
-  dayOfWeek: string
-}
+import { scheduleService, Schedule } from "@/lib/api"
+import { useNavigate } from "react-router-dom"
+import { Button } from "@/components/ui/button"
 
 export function ActiveSessions() {
-  const [sessions, setSessions] = useState<Session[]>([])
+  const navigate = useNavigate()
+  const [sessions, setSessions] = useState<Schedule[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchActiveSessions = async () => {
       try {
-        const response = await axios.get('/schedules/active')
+        const allSchedules = await scheduleService.getMySchedules()
         
-        // Map response data to match our interface
-        const mappedSessions = response.data.map((session: any) => ({
-          id: session.id,
-          className: session.classes?.name || 'N/A',
-          subject: session.courses?.name || 'N/A',
-          teacher: session.teachers?.name || 'N/A',
-          startTime: session.startTime,
-          endTime: session.endTime,
-          room: session.room,
-          dayOfWeek: session.dayOfWeek,
-          studentsPresent: session.attendance_sessions?.[0]?.attendances?.length || 0,
-          totalStudents: session.classes?.students?.length || 0,
-        }))
+        // Filter only today's active schedules
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
         
-        setSessions(mappedSessions)
+        const todaySchedules = allSchedules.filter(schedule => {
+          const scheduleDate = new Date(schedule.date)
+          scheduleDate.setHours(0, 0, 0, 0)
+          return scheduleDate.getTime() === today.getTime() && schedule.status === 'ACTIVE'
+        })
+        
+        setSessions(todaySchedules)
         setError(null)
       } catch (error: any) {
         console.error('Failed to fetch active sessions:', error)
-        setError(error.response?.data?.message || 'Gagal memuat sesi aktif')
+        setError(error.response?.data?.message || 'Gagal memuat jadwal hari ini')
       } finally {
         setIsLoading(false)
       }
@@ -61,7 +47,7 @@ export function ActiveSessions() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Sesi Absensi Aktif</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Jadwal Hari Ini</CardTitle>
           <CardDescription className="text-xs sm:text-sm">
             Memuat data...
           </CardDescription>
@@ -74,7 +60,7 @@ export function ActiveSessions() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Sesi Absensi Aktif</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Jadwal Hari Ini</CardTitle>
           <CardDescription className="text-xs sm:text-sm text-destructive">
             {error}
           </CardDescription>
@@ -86,36 +72,43 @@ export function ActiveSessions() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base sm:text-lg">Sesi Absensi Aktif</CardTitle>
-        <CardDescription className="text-xs sm:text-sm">
-          {sessions.length === 0 
-            ? 'Tidak ada sesi yang sedang berlangsung' 
-            : `${sessions.length} sesi sedang berlangsung`
-          }
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-base sm:text-lg">Jadwal Hari Ini</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              {sessions.length === 0 
+                ? 'Tidak ada jadwal hari ini' 
+                : `${sessions.length} jadwal perkuliahan`
+              }
+            </CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/schedules')}
+          >
+            Lihat Semua
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {sessions.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
-            Tidak ada sesi yang sedang berlangsung saat ini
+            Tidak ada jadwal perkuliahan hari ini
           </div>
         ) : (
           <div className="space-y-3 sm:space-y-4">
-            {sessions.map((session) => {
-              const attendancePercentage = session.totalStudents > 0 
-                ? (session.studentsPresent / session.totalStudents) * 100 
-                : 0
-              
-              return (
+            {sessions.map((session) => (
                 <div
                   key={session.id}
-                  className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 rounded-lg border p-2 sm:p-3 hover:bg-muted/50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 rounded-lg border p-2 sm:p-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/schedules/${session.id}`)}
                 >
                   <div className="space-y-1 min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium text-sm sm:text-base truncate">{session.className}</p>
+                      <p className="font-medium text-sm sm:text-base truncate">{session.courseName}</p>
                       <Badge variant="outline" className="text-[10px] sm:text-xs flex-shrink-0">
-                        {session.subject}
+                        {session.courseCode}
                       </Badge>
                       {session.room && (
                         <Badge variant="secondary" className="text-[10px] sm:text-xs flex-shrink-0">
@@ -124,7 +117,7 @@ export function ActiveSessions() {
                       )}
                     </div>
                     <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                      Guru: {session.teacher}
+                      {session.topic}
                     </p>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
@@ -132,28 +125,19 @@ export function ActiveSessions() {
                         <span className="truncate">{session.startTime} - {session.endTime}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Users className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">
-                          {session.studentsPresent}/{session.totalStudents} siswa hadir
-                        </span>
+                        <QrCode className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">QR Code tersedia</span>
                       </div>
                     </div>
                   </div>
                   <Badge 
-                    variant={
-                      attendancePercentage === 100 
-                        ? "default" 
-                        : attendancePercentage >= 80 
-                        ? "secondary" 
-                        : "destructive"
-                    }
+                    variant={session.status === 'ACTIVE' ? 'default' : 'secondary'}
                     className="text-xs self-start sm:self-auto flex-shrink-0"
                   >
-                    {attendancePercentage.toFixed(0)}%
+                    {session.status}
                   </Badge>
                 </div>
-              )
-            })}
+            ))}
           </div>
         )}
       </CardContent>
