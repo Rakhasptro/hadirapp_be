@@ -13,7 +13,9 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  Users
+  Users,
+  Ban,
+  Power
 } from 'lucide-react';
 import { scheduleService, attendanceService, Schedule, Attendance } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -28,6 +30,7 @@ export default function ScheduleDetailPage() {
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -128,6 +131,36 @@ export default function ScheduleDetailPage() {
     }
   };
 
+  const handleToggleStatus = async () => {
+    if (!schedule) return;
+    
+    setTogglingStatus(true);
+    try {
+      // Toggle between ACTIVE and CANCELLED
+      const newStatus: 'ACTIVE' | 'CANCELLED' = schedule.status === 'ACTIVE' ? 'CANCELLED' : 'ACTIVE';
+      
+      await scheduleService.updateSchedule(schedule.id, { status: newStatus });
+      
+      // Update local state
+      setSchedule({ ...schedule, status: newStatus });
+      
+      toast({
+        title: newStatus === 'ACTIVE' ? 'QR Code Diaktifkan' : 'QR Code Dinonaktifkan',
+        description: newStatus === 'ACTIVE' 
+          ? 'Mahasiswa dapat melakukan presensi' 
+          : 'Presensi ditutup untuk jadwal ini',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.message || 'Gagal mengubah status',
+      });
+    } finally {
+      setTogglingStatus(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -180,9 +213,52 @@ export default function ScheduleDetailPage() {
               })}
             </p>
           </div>
-          <Badge variant={schedule.status === 'ACTIVE' ? 'default' : 'secondary'}>
-            {schedule.status}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge 
+              variant={
+                schedule.status === 'ACTIVE' ? 'default' : 
+                schedule.status === 'CANCELLED' ? 'secondary' : 
+                'outline'
+              }
+              className={
+                schedule.status === 'ACTIVE' ? 'bg-green-500 hover:bg-green-600' :
+                schedule.status === 'CANCELLED' ? 'bg-gray-500' : ''
+              }
+            >
+              {schedule.status === 'ACTIVE' && <QrCode className="h-3 w-3 mr-1" />}
+              {schedule.status === 'CANCELLED' && <Ban className="h-3 w-3 mr-1" />}
+              {schedule.status}
+            </Badge>
+            <Button
+              variant={schedule.status === 'ACTIVE' ? 'destructive' : 'default'}
+              size="sm"
+              onClick={handleToggleStatus}
+              disabled={togglingStatus || schedule.status === 'COMPLETED'}
+              className={schedule.status !== 'ACTIVE' && schedule.status !== 'COMPLETED' ? 'bg-green-500 hover:bg-green-600' : ''}
+            >
+              {togglingStatus ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : schedule.status === 'ACTIVE' ? (
+                <>
+                  <Ban className="mr-2 h-4 w-4" />
+                  Nonaktifkan QR
+                </>
+              ) : schedule.status === 'COMPLETED' ? (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Selesai
+                </>
+              ) : (
+                <>
+                  <Power className="mr-2 h-4 w-4" />
+                  Aktifkan QR
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -2,8 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthPage } from '@/pages/auth-page';
 import { ProfilePage } from '@/pages/profile-page';
 import { DashboardContent } from '@/pages/dashboard-content';
-import AttendanceSessionsPage from '@/pages/attendance-sessions-page';
-import SessionDetailPage from '@/pages/session-detail-page';
 import TeacherDashboard from '@/pages/teacher-dashboard';
 import SchedulesListPage from '@/pages/schedules-list-page';
 import CreateSchedulePage from '@/pages/create-schedule-page';
@@ -65,9 +63,7 @@ export function AppRouter() {
           {/* Profile */}
           <Route path="/profile" element={<ProfilePage />} />
           
-          {/* Attendance */}
-          <Route path="/attendance/sessions" element={<AttendanceSessionsPage />} />
-          <Route path="/attendance/sessions/:id" element={<SessionDetailPage />} />
+          {/* Attendance - QR-based */}
           <Route path="/attendance/pending" element={<PendingAttendancesPage />} />
           
           {/* Schedules - QR-based */}

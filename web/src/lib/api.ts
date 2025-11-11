@@ -35,6 +35,10 @@ export interface CreateScheduleDto {
   topic: string;
 }
 
+export interface UpdateScheduleDto extends Partial<CreateScheduleDto> {
+  status?: 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+}
+
 export interface Attendance {
   id: string;
   scheduleId: string;
@@ -92,7 +96,7 @@ export const scheduleService = {
    * Update schedule
    * PATCH /api/schedules/:id
    */
-  async updateSchedule(id: string, data: Partial<CreateScheduleDto>): Promise<Schedule> {
+  async updateSchedule(id: string, data: UpdateScheduleDto): Promise<Schedule> {
     const response = await axios.patch<Schedule>(`/schedules/${id}`, data);
     return response.data;
   },

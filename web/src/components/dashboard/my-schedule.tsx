@@ -1,42 +1,83 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Calendar } from "lucide-react"
+import { Clock, Calendar, QrCode, Ban } from "lucide-react"
 import { useState, useEffect } from "react"
 import { scheduleService, Schedule } from "@/lib/api"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
+import { toast } from "@/hooks/use-toast"
 
 export function MySchedule() {
   const navigate = useNavigate()
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
+
+  const fetchSchedules = async () => {
+    try {
+      const allSchedules = await scheduleService.getMySchedules()
+      
+      // Filter upcoming schedules (today and future, show both ACTIVE and CANCELLED)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      const upcomingSchedules = allSchedules
+        .filter(schedule => {
+          const scheduleDate = new Date(schedule.date)
+          scheduleDate.setHours(0, 0, 0, 0)
+          // Show schedules that are ACTIVE or CANCELLED (not COMPLETED)
+          return scheduleDate >= today && schedule.status !== 'COMPLETED'
+        })
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .slice(0, 5) // Show only next 5
+      
+      setSchedules(upcomingSchedules)
+    } catch (error) {
+      console.error('Failed to fetch schedules:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleToggleQR = async (e: React.MouseEvent, scheduleId: string, currentStatus: string) => {
+    e.stopPropagation() // Prevent card click navigation
+    
+    setTogglingId(scheduleId)
+    try {
+      // Toggle between ACTIVE and CANCELLED
+      const newStatus: 'ACTIVE' | 'CANCELLED' = currentStatus === 'ACTIVE' ? 'CANCELLED' : 'ACTIVE'
+      
+      // Use updateSchedule endpoint with status
+      await scheduleService.updateSchedule(scheduleId, { status: newStatus })
+      
+      // Update local state
+      setSchedules(prevSchedules =>
+        prevSchedules.map(schedule =>
+          schedule.id === scheduleId
+            ? { ...schedule, status: newStatus }
+            : schedule
+        )
+      )
+      
+      toast({
+        title: newStatus === 'ACTIVE' ? 'QR Code Diaktifkan' : 'QR Code Dinonaktifkan',
+        description: newStatus === 'ACTIVE' 
+          ? 'Mahasiswa dapat melakukan presensi' 
+          : 'Presensi ditutup untuk jadwal ini',
+      })
+    } catch (error) {
+      console.error('Failed to toggle QR status:', error)
+      toast({
+        title: 'Gagal',
+        description: 'Tidak dapat mengubah status QR code',
+        variant: 'destructive',
+      })
+    } finally {
+      setTogglingId(null)
+    }
+  }
 
   useEffect(() => {
-    const fetchSchedules = async () => {
-      try {
-        const allSchedules = await scheduleService.getMySchedules()
-        
-        // Filter upcoming schedules (today and future, active only)
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        
-        const upcomingSchedules = allSchedules
-          .filter(schedule => {
-            const scheduleDate = new Date(schedule.date)
-            scheduleDate.setHours(0, 0, 0, 0)
-            return scheduleDate >= today && schedule.status === 'ACTIVE'
-          })
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-          .slice(0, 5) // Show only next 5
-        
-        setSchedules(upcomingSchedules)
-      } catch (error) {
-        console.error('Failed to fetch schedules:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     fetchSchedules()
   }, [])
 
@@ -85,10 +126,12 @@ export function MySchedule() {
             {schedules.map((schedule) => (
               <div
                 key={schedule.id}
-                className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => navigate(`/schedules/${schedule.id}`)}
+                className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors"
               >
-                <div className="space-y-1 min-w-0 flex-1">
+                <div 
+                  className="space-y-1 min-w-0 flex-1 cursor-pointer"
+                  onClick={() => navigate(`/schedules/${schedule.id}`)}
+                >
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-medium text-sm truncate">
                       {schedule.courseName}
@@ -96,6 +139,17 @@ export function MySchedule() {
                     <Badge variant="outline" className="text-[10px] sm:text-xs flex-shrink-0">
                       {schedule.courseCode}
                     </Badge>
+                    {schedule.status === 'ACTIVE' ? (
+                      <Badge variant="default" className="text-[10px] bg-green-500 hover:bg-green-600">
+                        <QrCode className="h-3 w-3 mr-1" />
+                        Aktif
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-[10px]">
+                        <Ban className="h-3 w-3 mr-1" />
+                        Nonaktif
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {schedule.topic}
@@ -122,6 +176,27 @@ export function MySchedule() {
                     )}
                   </div>
                 </div>
+                <Button
+                  variant={schedule.status === 'ACTIVE' ? 'default' : 'outline'}
+                  size="sm"
+                  className={schedule.status === 'ACTIVE' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600 text-white'}
+                  onClick={(e) => handleToggleQR(e, schedule.id, schedule.status)}
+                  disabled={togglingId === schedule.id}
+                >
+                  {togglingId === schedule.id ? (
+                    'Loading...'
+                  ) : schedule.status === 'ACTIVE' ? (
+                    <>
+                      <Ban className="h-4 w-4 mr-1" />
+                      Nonaktifkan
+                    </>
+                  ) : (
+                    <>
+                      <QrCode className="h-4 w-4 mr-1" />
+                      Aktifkan
+                    </>
+                  )}
+                </Button>
               </div>
             ))}
           </div>
