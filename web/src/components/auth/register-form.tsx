@@ -48,7 +48,7 @@ export function RegisterForm({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
       await authService.register({ 
         email, 
         password,
-        role: 'ADMIN' // Default role untuk registrasi admin
+        role: 'TEACHER' // Default role untuk registrasi teacher
       });
       
       setSuccess(true);
@@ -69,8 +69,8 @@ export function RegisterForm({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold">Daftar Akun Admin</CardTitle>
-        <CardDescription>Buat akun admin baru untuk HadirApp</CardDescription>
+        <CardTitle className="text-2xl font-bold">Daftar Akun Teacher</CardTitle>
+        <CardDescription>Buat akun teacher baru untuk HadirApp</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -91,7 +91,7 @@ export function RegisterForm({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
             <Input
               id="email"
               type="email"
-              placeholder="admin@example.com"
+              placeholder="teacher@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

@@ -38,7 +38,7 @@ interface TeacherProfile {
 interface ProfileData {
   id: string
   email: string
-  role: 'ADMIN' | 'TEACHER' | 'STUDENT'
+  role: 'TEACHER' // Only TEACHER role exists in the system
   profile: TeacherProfile | any
 }
 
@@ -279,30 +279,14 @@ export function ProfilePage() {
     return '-'
   }
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'ADMIN':
-        return 'bg-red-500 hover:bg-red-600'
-      case 'TEACHER':
-        return 'bg-blue-500 hover:bg-blue-600'
-      case 'STUDENT':
-        return 'bg-green-500 hover:bg-green-600'
-      default:
-        return 'bg-gray-500 hover:bg-gray-600'
-    }
+  const getRoleBadgeColor = () => {
+    // Only TEACHER role exists
+    return 'bg-blue-500 hover:bg-blue-600'
   }
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'ADMIN':
-        return 'Administrator'
-      case 'TEACHER':
-        return 'Guru'
-      case 'STUDENT':
-        return 'Mahasiswa'
-      default:
-        return role
-    }
+  const getRoleLabel = () => {
+    // Only TEACHER role exists
+    return 'Guru'
   }
 
   if (loading) {
@@ -364,8 +348,8 @@ export function ProfilePage() {
                     : profile.email}
                 </CardTitle>
                 <CardDescription className="flex items-center gap-2 mt-2">
-                  <Badge className={getRoleBadgeColor(profile.role)}>
-                    {getRoleLabel(profile.role)}
+                  <Badge className={getRoleBadgeColor()}>
+                    {getRoleLabel()}
                   </Badge>
                   {profile.role === 'TEACHER' && profile.profile?.nip && (
                     <span className="text-sm text-muted-foreground">NIP: {profile.profile.nip}</span>
@@ -672,14 +656,12 @@ export function ProfilePage() {
               {/* Role Info */}
               <div className="p-4 bg-muted/50 rounded-lg border-l-4 border-primary">
                 <div className="flex items-center gap-2 mb-2">
-                  <Badge className={getRoleBadgeColor(profile.role)}>
-                    {getRoleLabel(profile.role)}
+                  <Badge className={getRoleBadgeColor()}>
+                    {getRoleLabel()}
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {profile.role === 'ADMIN' && 'Anda memiliki akses penuh ke sistem sebagai Administrator'}
-                  {profile.role === 'TEACHER' && 'Anda dapat mengelola kehadiran siswa dan melihat jadwal mengajar'}
-                  {profile.role === 'STUDENT' && 'Anda dapat melihat kehadiran dan jadwal kelas'}
+                  Anda dapat mengelola kehadiran siswa dan melihat jadwal mengajar
                 </p>
               </div>
             </div>

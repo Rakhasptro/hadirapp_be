@@ -36,14 +36,11 @@ import {
   Settings,
   LayoutDashboard,
   CalendarCheck,
-  Users,
   GraduationCap,
   BookOpen,
   Calendar,
   FileText,
-  BellRing,
-  Wifi,
-  UserCog
+  BellRing
 } from "lucide-react"
 import { useNavigate, Outlet, useLocation } from "react-router-dom"
 import { ModeToggle } from "@/components/mode-toggle"
@@ -53,7 +50,6 @@ export function MainLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const user = authService.getUser()
-  const isAdmin = user?.role === 'ADMIN'
   const isTeacher = user?.role === 'TEACHER'
 
   const handleLogout = () => {
@@ -96,158 +92,7 @@ export function MainLayout() {
         </SidebarHeader>
         
         <SidebarContent>
-          {/* ADMIN Menu */}
-          {isAdmin && (
-            <>
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarGroup>
-                  <SidebarGroupLabel asChild>
-                    <CollapsibleTrigger>
-                      Menu Utama
-                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                    </CollapsibleTrigger>
-                  </SidebarGroupLabel>
-                  <CollapsibleContent>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        <SidebarMenuItem>
-                          <SidebarMenuButton 
-                            tooltip="Dashboard" 
-                            onClick={() => navigate('/admin/dashboard')}
-                            isActive={isActive('/admin/dashboard')}
-                          >
-                            <LayoutDashboard />
-                            <span>Dashboard</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        <SidebarMenuItem>
-                          <SidebarMenuButton 
-                            tooltip="Attendance" 
-                            onClick={() => navigate('/attendance/sessions')}
-                            isActive={isActive('/attendance')}
-                          >
-                            <CalendarCheck />
-                            <span>Kehadiran</span>
-                            <Badge variant="secondary" className="ml-auto">5</Badge>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        <SidebarMenuItem>
-                          <SidebarMenuButton 
-                            tooltip="Schedules" 
-                            onClick={() => navigate('/schedules')}
-                            isActive={isActive('/schedules')}
-                          >
-                            <Calendar />
-                            <span>Jadwal</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        <SidebarMenuItem>
-                          <SidebarMenuButton tooltip="Leave">
-                            <FileText />
-                            <span>Izin/Cuti</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        <SidebarMenuItem>
-                          <SidebarMenuButton tooltip="Notifications">
-                            <BellRing />
-                            <span>Notifikasi</span>
-                            <Badge variant="destructive" className="ml-auto">3</Badge>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </CollapsibleContent>
-                </SidebarGroup>
-              </Collapsible>
-              
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarGroup>
-                  <SidebarGroupLabel asChild>
-                    <CollapsibleTrigger>
-                      Manajemen
-                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                    </CollapsibleTrigger>
-                  </SidebarGroupLabel>
-                  <CollapsibleContent>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        <SidebarMenuItem>
-                          <SidebarMenuButton tooltip="Users">
-                            <Users />
-                            <span>Pengguna</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        <SidebarMenuItem>
-                          <SidebarMenuButton tooltip="Teachers">
-                            <GraduationCap />
-                            <span>Guru</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        <SidebarMenuItem>
-                          <SidebarMenuButton tooltip="Classes">
-                            <BookOpen />
-                            <span>Kelas</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        <SidebarMenuItem>
-                          <SidebarMenuButton tooltip="Courses">
-                            <BookOpen />
-                            <span>Mata Pelajaran</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </CollapsibleContent>
-                </SidebarGroup>
-              </Collapsible>
-              
-              <Collapsible className="group/collapsible">
-                <SidebarGroup>
-                  <SidebarGroupLabel asChild>
-                    <CollapsibleTrigger>
-                      Sistem
-                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                    </CollapsibleTrigger>
-                  </SidebarGroupLabel>
-                  <CollapsibleContent>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        <SidebarMenuItem>
-                          <SidebarMenuButton tooltip="WiFi Management">
-                            <Wifi />
-                            <span>WiFi</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        <SidebarMenuItem>
-                          <SidebarMenuButton tooltip="Admin">
-                            <UserCog />
-                            <span>Admin</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        <SidebarMenuItem>
-                          <SidebarMenuButton tooltip="Settings">
-                            <Settings />
-                            <span>Pengaturan</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </CollapsibleContent>
-                </SidebarGroup>
-              </Collapsible>
-            </>
-          )}
-
-          {/* TEACHER Menu */}
+          {/* TEACHER Menu - Only role in the system */}
           {isTeacher && (
             <>
               <Collapsible defaultOpen className="group/collapsible">

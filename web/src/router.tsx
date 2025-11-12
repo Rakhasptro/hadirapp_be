@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthPage } from '@/pages/auth-page';
 import { ProfilePage } from '@/pages/profile-page';
-import { DashboardContent } from '@/pages/dashboard-content';
 import TeacherDashboard from '@/pages/teacher-dashboard';
 import SchedulesListPage from '@/pages/schedules-list-page';
 import CreateSchedulePage from '@/pages/create-schedule-page';
@@ -38,27 +37,14 @@ export function AppRouter() {
             </ProtectedRoute>
           }
         >
-          {/* Dashboard - Redirect to role-specific dashboard */}
+          {/* Dashboard - Redirect to teacher dashboard (only TEACHER role) */}
           <Route 
             path="/dashboard" 
-            element={
-              <Navigate 
-                to={
-                  authService.getUser()?.role === 'TEACHER' 
-                    ? '/teacher/dashboard' 
-                    : authService.getUser()?.role === 'ADMIN'
-                    ? '/admin/dashboard'
-                    : '/student/dashboard'
-                } 
-                replace 
-              />
-            } 
+            element={<Navigate to="/teacher/dashboard" replace />} 
           />
           
-          {/* Role-specific Dashboards */}
+          {/* Teacher Dashboard */}
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-          <Route path="/admin/dashboard" element={<DashboardContent />} />
-          <Route path="/student/dashboard" element={<DashboardContent />} />
           
           {/* Profile */}
           <Route path="/profile" element={<ProfilePage />} />
@@ -72,21 +58,12 @@ export function AppRouter() {
           <Route path="/schedules/:id" element={<ScheduleDetailPage />} />
         </Route>
         
-        {/* Default redirect based on role */}
+        {/* Default redirect - always to teacher dashboard */}
         <Route
           path="/"
           element={
             authService.isAuthenticated() ? (
-              <Navigate 
-                to={
-                  authService.getUser()?.role === 'TEACHER' 
-                    ? '/teacher/dashboard' 
-                    : authService.getUser()?.role === 'ADMIN'
-                    ? '/admin/dashboard'
-                    : '/student/dashboard'
-                } 
-                replace 
-              />
+              <Navigate to="/teacher/dashboard" replace />
             ) : (
               <Navigate to="/login" replace />
             )

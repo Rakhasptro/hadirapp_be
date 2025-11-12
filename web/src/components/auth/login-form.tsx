@@ -38,13 +38,12 @@ export function LoginForm({ onSwitchToRegister, className }: LoginFormProps) {
         password: formData.password
       });
       
-      // Redirect based on role
+      // Redirect to teacher dashboard (only TEACHER role exists)
       if (response.user.role === 'TEACHER') {
         navigate('/teacher/dashboard');
-      } else if (response.user.role === 'ADMIN') {
-        navigate('/admin/dashboard');
       } else {
-        navigate('/student/dashboard');
+        // Fallback for any other role
+        navigate('/teacher/dashboard');
       }
     } catch (err: any) {
       console.error('Login error:', err);
