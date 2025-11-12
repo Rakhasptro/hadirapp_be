@@ -1,118 +1,195 @@
 import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { authService } from '@/lib/auth';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { authService } from '@/lib/auth';
+import { Loader2 } from 'lucide-react';
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
+  className?: string;
 }
 
-export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+export function LoginForm({ onSwitchToRegister, className }: LoginFormProps) {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    setIsLoading(true);
+    setError(null);
 
     try {
-      const response = await authService.login({ email, password });
-      console.log('Login successful:', response);
+      const response = await authService.login({
+        email: formData.email,
+        password: formData.password
+      });
       
-      toast.success('Login berhasil! Selamat datang.');
-      
-      // Redirect to dashboard (teacher-only system)
-      navigate('/dashboard');
+      // Redirect based on role
+      if (response.user.role === 'TEACHER') {
+        navigate('/teacher/dashboard');
+      } else if (response.user.role === 'ADMIN') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/student/dashboard');
+      }
     } catch (err: any) {
       console.error('Login error:', err);
-      const message = err.response?.data?.message || 'Login gagal. Email atau password salah.';
-      setError(message);
-      toast.error(message);
+      console.error('Response data:', err.response?.data);
+      console.error('Request data:', { email: formData.email, password: '***' });
+      
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.error || 
+                          err.message ||
+                          'Login failed. Please check your credentials.';
+      setError(errorMessage);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">Login</CardTitle>
-        <CardDescription>Masuk ke akun HadirApp Anda</CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          {error && (
-            <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
-              {error}
-            </div>
-          )}
-          
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="admin@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-                minLength={6}
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                disabled={loading}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+  return (
+    <div className={cn("flex flex-col gap-6", className)}>
+      <Card className="overflow-hidden p-0">
+        <CardContent className="grid p-0 md:grid-cols-2">
+          <form className="p-6 md:p-8" onSubmit={handleSubmit}>
+            <FieldGroup>
+              <div className="flex flex-col items-center gap-2 text-center">
+                <h1 className="text-2xl font-bold">Selamat Datang</h1>
+                <p className="text-muted-foreground text-balance">
+                  Login ke HadirApp - Sistem Presensi QR
+                </p>
+              </div>
+              
+              {error && (
+                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+                  {error}
+                </div>
+              )}
+
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="nama@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  disabled={isLoading}
+                />
+              </Field>
+              
+              <Field>
+                <div className="flex items-center">
+                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                  <a
+                    href="#"
+                    className="ml-auto text-sm underline-offset-2 hover:underline"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      // TODO: Add forgot password functionality
+                    }}
+                  >
+                    Lupa password?
+                  </a>
+                </div>
+                <Input 
+                  id="password" 
+                  name="password"
+                  type="password" 
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  disabled={isLoading}
+                />
+              </Field>
+              
+              <Field>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    'Login'
+                  )}
+                </Button>
+              </Field>
+
+              <FieldDescription className="text-center">
+                Belum punya akun?{' '}
+                <button
+                  type="button"
+                  onClick={onSwitchToRegister}
+                  className="text-primary hover:underline font-medium"
+                >
+                  Daftar
+                </button>
+              </FieldDescription>
+            </FieldGroup>
+          </form>
+          
+          <div className="bg-muted relative hidden md:block">
+            <div className="absolute inset-0 flex items-center justify-center p-8">
+              <div className="space-y-4 text-center">
+                <div className="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-10 h-10 text-primary"
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <path d="M7 7h.01"/>
+                    <path d="M7 12h.01"/>
+                    <path d="M7 17h.01"/>
+                    <path d="M12 7h5"/>
+                    <path d="M12 12h5"/>
+                    <path d="M12 17h5"/>
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold">HadirApp</h2>
+                <p className="text-muted-foreground">
+                  Sistem presensi modern dengan teknologi QR Code untuk kemudahan dan keamanan
+                </p>
+              </div>
             </div>
           </div>
         </CardContent>
-
-        <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Memproses...' : 'Login'}
-          </Button>
-          
-          <div className="text-sm text-center text-muted-foreground">
-            Belum punya akun?{' '}
-            <button
-              type="button"
-              onClick={onSwitchToRegister}
-              className="text-primary hover:underline font-medium"
-            >
-              Daftar di sini
-            </button>
-          </div>
-        </CardFooter>
-      </form>
-    </Card>
+      </Card>
+      
+      <FieldDescription className="px-6 text-center text-xs">
+        Dengan melanjutkan, Anda menyetujui{' '}
+        <a href="#" className="underline">Syarat & Ketentuan</a> dan{' '}
+        <a href="#" className="underline">Kebijakan Privasi</a> kami
+      </FieldDescription>
+    </div>
   );
 }
