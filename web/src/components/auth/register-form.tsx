@@ -91,7 +91,7 @@ export function RegisterForm({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
             <Input
               id="email"
               type="email"
-              placeholder="teacher@example.com"
+              placeholder="admin@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -122,7 +122,6 @@ export function RegisterForm({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            <p className="text-xs text-muted-foreground">Minimal 6 karakter</p>
           </div>
 
           <div className="space-y-2">
@@ -151,7 +150,7 @@ export function RegisterForm({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col space-y-4">
+        <CardFooter className="flex flex-col space-y-2">
           <Button type="submit" className="w-full" disabled={loading || success}>
             {loading ? 'Memproses...' : success ? 'Berhasil!' : 'Daftar'}
           </Button>

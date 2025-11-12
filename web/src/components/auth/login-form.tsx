@@ -33,18 +33,11 @@ export function LoginForm({ onSwitchToRegister, className }: LoginFormProps) {
     setError(null);
 
     try {
-      const response = await authService.login({
+      await authService.login({
         email: formData.email,
         password: formData.password
       });
-      
-      // Redirect to teacher dashboard (only TEACHER role exists)
-      if (response.user.role === 'TEACHER') {
-        navigate('/teacher/dashboard');
-      } else {
-        // Fallback for any other role
-        navigate('/teacher/dashboard');
-      }
+      navigate('/teacher/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
       console.error('Response data:', err.response?.data);
@@ -68,14 +61,14 @@ export function LoginForm({ onSwitchToRegister, className }: LoginFormProps) {
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)}>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8" onSubmit={handleSubmit}>
-            <FieldGroup>
-              <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Selamat Datang</h1>
-                <p className="text-muted-foreground text-balance">
+    <div className={cn("w-full max-w-md mx-auto", className)}>
+      <Card className="overflow-hidden">
+        <CardContent className="p-5">
+          <form onSubmit={handleSubmit}>
+            <FieldGroup className="space-y-2">
+              <div className="flex flex-col gap-2 text-center mb-2">
+                <h1 className="text-3xl font-bold">Selamat Datang</h1>
+                <p className="text-sm text-muted-foreground">
                   Login ke HadirApp - Sistem Presensi QR
                 </p>
               </div>
@@ -107,8 +100,7 @@ export function LoginForm({ onSwitchToRegister, className }: LoginFormProps) {
                     href="#"
                     className="ml-auto text-sm underline-offset-2 hover:underline"
                     onClick={(e) => {
-                      e.preventDefault();
-                      // TODO: Add forgot password functionality
+                      e.preventDefault()
                     }}
                   >
                     Lupa password?
@@ -138,7 +130,7 @@ export function LoginForm({ onSwitchToRegister, className }: LoginFormProps) {
                 </Button>
               </Field>
 
-              <FieldDescription className="text-center">
+              <FieldDescription className="text-center text-sm">
                 Belum punya akun?{' '}
                 <button
                   type="button"
@@ -150,45 +142,14 @@ export function LoginForm({ onSwitchToRegister, className }: LoginFormProps) {
               </FieldDescription>
             </FieldGroup>
           </form>
-          
-          <div className="bg-muted relative hidden md:block">
-            <div className="absolute inset-0 flex items-center justify-center p-8">
-              <div className="space-y-4 text-center">
-                <div className="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="w-10 h-10 text-primary"
-                  >
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                    <path d="M7 7h.01"/>
-                    <path d="M7 12h.01"/>
-                    <path d="M7 17h.01"/>
-                    <path d="M12 7h5"/>
-                    <path d="M12 12h5"/>
-                    <path d="M12 17h5"/>
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold">HadirApp</h2>
-                <p className="text-muted-foreground">
-                  Sistem presensi modern dengan teknologi QR Code untuk kemudahan dan keamanan
-                </p>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
       
-      <FieldDescription className="px-6 text-center text-xs">
+      <p className="text-center text-xs text-muted-foreground mt-4">
         Dengan melanjutkan, Anda menyetujui{' '}
-        <a href="#" className="underline">Syarat & Ketentuan</a> dan{' '}
-        <a href="#" className="underline">Kebijakan Privasi</a> kami
-      </FieldDescription>
+        <a href="#" className="underline hover:text-foreground">Syarat & Ketentuan</a> dan{' '}
+        <a href="#" className="underline hover:text-foreground">Kebijakan Privasi</a> kami
+      </p>
     </div>
   );
 }

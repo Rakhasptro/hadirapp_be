@@ -22,14 +22,14 @@ export function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-8">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-6">
+      <div className="w-full space-y-8">
         {/* Logo/Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-primary">
+        <div className="text-center space-y-3">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             HadirApp
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-lg">
             Sistem Manajemen Kehadiran
           </p>
         </div>
@@ -38,16 +38,13 @@ export function AuthPage() {
         {isLogin ? (
           <LoginForm onSwitchToRegister={handleSwitchToRegister} />
         ) : (
-          <RegisterForm 
-            onSwitchToLogin={handleSwitchToLogin}
-            onSuccess={handleRegisterSuccess}
-          />
+          <div className="flex justify-center">
+            <RegisterForm 
+              onSwitchToLogin={handleSwitchToLogin}
+              onSuccess={handleRegisterSuccess}
+            />
+          </div>
         )}
-
-        {/* Footer */}
-        <div className="text-center text-sm text-muted-foreground">
-          <p>&copy; 2025 HadirApp. All rights reserved.</p>
-        </div>
       </div>
     </div>
   );
