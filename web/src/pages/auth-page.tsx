@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginForm } from '@/components/auth/login-form';
 import { RegisterForm } from '@/components/auth/register-form';
+import { ForgotPasswordForm } from '@/components/auth/forgot-password-form';
 import { authService } from '@/lib/auth';
 
 export function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,10 +16,11 @@ export function AuthPage() {
     }
   }, [navigate]);
 
-  const handleSwitchToRegister = () => setIsLogin(false);
-  const handleSwitchToLogin = () => setIsLogin(true);
+  const handleSwitchToRegister = () => setMode('register');
+  const handleSwitchToLogin = () => setMode('login');
+  const handleSwitchToForgot = () => setMode('forgot');
   const handleRegisterSuccess = () => {
-    setIsLogin(true);
+    setMode('login');
   };
 
   return (
@@ -35,14 +37,23 @@ export function AuthPage() {
         </div>
 
         {/* Form */}
-        {isLogin ? (
-          <LoginForm onSwitchToRegister={handleSwitchToRegister} />
-        ) : (
+        {mode === 'login' && (
+            <LoginForm 
+              onSwitchToRegister={handleSwitchToRegister}
+              onSwitchToForgot={handleSwitchToForgot}
+            />
+        )}
+        {mode === 'register' && (
           <div className="flex justify-center">
             <RegisterForm 
               onSwitchToLogin={handleSwitchToLogin}
               onSuccess={handleRegisterSuccess}
             />
+          </div>
+        )}
+        {mode === 'forgot' && (
+          <div className="flex justify-center">
+            <ForgotPasswordForm onSwitchToLogin={handleSwitchToLogin} />
           </div>
         )}
       </div>

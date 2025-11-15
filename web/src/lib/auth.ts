@@ -23,6 +23,7 @@ interface AuthResponse {
 }
 
 export const authService = {
+
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await axios.post<AuthResponse>('/auth/login', credentials);
     if (response.data.access_token) {
@@ -34,6 +35,12 @@ export const authService = {
 
   async register(data: RegisterData): Promise<any> {
     const response = await axios.post('/auth/register', data);
+    return response.data;
+  },
+
+  async resetPassword(data: { email: string; newPassword: string }): Promise<any> {
+    // Endpoint backend yang harus disediakan: /auth/reset-password
+    const response = await axios.post('/auth/reset-password', data);
     return response.data;
   },
 

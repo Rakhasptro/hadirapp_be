@@ -148,13 +148,13 @@ export function RegisterForm({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
               </button>
             </div>
           </div>
+        <div className="h-2" />
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-2">
           <Button type="submit" className="w-full" disabled={loading || success}>
             {loading ? 'Memproses...' : success ? 'Berhasil!' : 'Daftar'}
           </Button>
-          
           <div className="text-sm text-center text-muted-foreground">
             Sudah punya akun?{' '}
             <button

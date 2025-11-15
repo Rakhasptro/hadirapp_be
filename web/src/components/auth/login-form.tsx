@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Field,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field"
@@ -14,11 +13,12 @@ import { authService } from '@/lib/auth';
 import { Loader2 } from 'lucide-react';
 
 interface LoginFormProps {
-  onSwitchToRegister: () => void;
+  onSwitchToForgot?: () => void;
+  onSwitchToRegister?: () => void;
   className?: string;
 }
 
-export function LoginForm({ onSwitchToRegister, className }: LoginFormProps) {
+ export function LoginForm({ onSwitchToForgot, onSwitchToRegister, className }: LoginFormProps) {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,25 +60,24 @@ export function LoginForm({ onSwitchToRegister, className }: LoginFormProps) {
     }));
   };
 
+
   return (
     <div className={cn("w-full max-w-md mx-auto", className)}>
       <Card className="overflow-hidden">
         <CardContent className="p-5">
           <form onSubmit={handleSubmit}>
-            <FieldGroup className="space-y-2">
-              <div className="flex flex-col gap-2 text-center mb-2">
+            <FieldGroup className="space-y-1">
+              <div className="flex flex-col gap-1 text-center mb-2">
                 <h1 className="text-3xl font-bold">Selamat Datang</h1>
                 <p className="text-sm text-muted-foreground">
                   Login ke HadirApp - Sistem Presensi QR
                 </p>
               </div>
-              
               {error && (
                 <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
                   {error}
                 </div>
               )}
-
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
@@ -92,19 +91,20 @@ export function LoginForm({ onSwitchToRegister, className }: LoginFormProps) {
                   disabled={isLoading}
                 />
               </Field>
-              
               <Field>
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
-                    onClick={(e) => {
-                      e.preventDefault()
+                  <button
+                    type="button"
+                    className="ml-auto text-sm underline-offset-2 hover:underline text-primary"
+                    onClick={e => {
+                      e.preventDefault();
+                      if (typeof onSwitchToForgot === 'function') onSwitchToForgot();
                     }}
+                    disabled={isLoading}
                   >
                     Lupa password?
-                  </a>
+                  </button>
                 </div>
                 <Input 
                   id="password" 
@@ -116,40 +116,34 @@ export function LoginForm({ onSwitchToRegister, className }: LoginFormProps) {
                   disabled={isLoading}
                 />
               </Field>
-              
-              <Field>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    'Login'
-                  )}
-                </Button>
-              </Field>
-
-              <FieldDescription className="text-center text-sm">
-                Belum punya akun?{' '}
-                <button
-                  type="button"
-                  onClick={onSwitchToRegister}
-                  className="text-primary hover:underline font-medium"
-                >
-                  Daftar
-                </button>
-              </FieldDescription>
             </FieldGroup>
+            <div className="mt-4">
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Login
+              </Button>
+            </div>
           </form>
+          <div className="text-center mt-2">
+            <span className="text-sm text-muted-foreground">Belum punya akun?</span>{' '}
+            <button
+              type="button"
+              className="text-primary text-sm font-medium hover:underline ml-1"
+              onClick={() => {
+                if (typeof onSwitchToRegister === 'function') onSwitchToRegister();
+              }}
+              disabled={isLoading}
+            >
+              Daftar Akun Teacher
+            </button>
+          </div>
         </CardContent>
       </Card>
-      
-      <p className="text-center text-xs text-muted-foreground mt-4">
-        Dengan melanjutkan, Anda menyetujui{' '}
-        <a href="#" className="underline hover:text-foreground">Syarat & Ketentuan</a> dan{' '}
-        <a href="#" className="underline hover:text-foreground">Kebijakan Privasi</a> kami
-      </p>
+       <p className="text-center text-xs text-muted-foreground mt-4">
+            Dengan melanjutkan, Anda menyetujui{' '}
+            <a href="#" className="underline hover:text-foreground">Syarat & Ketentuan</a> dan{' '}
+            <a href="#" className="underline hover:text-foreground">Kebijakan Privasi</a> kami
+          </p>
     </div>
   );
 }
