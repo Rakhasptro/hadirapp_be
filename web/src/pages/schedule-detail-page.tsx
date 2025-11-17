@@ -189,7 +189,7 @@ export default function ScheduleDetailPage() {
   const rejectedCount = attendances.filter(a => a.status === 'REJECTED').length;
 
   return (
-    <div className="container max-w-7xl py-6">
+    <div className="container max-w-7xl py-6 px-2 sm:px-4">
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -200,11 +200,11 @@ export default function ScheduleDetailPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Kembali
         </Button>
-        
-        <div className="flex items-start justify-between">
+
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold">{schedule.courseName}</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold">{schedule.courseName}</h1>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               {schedule.courseCode} • {new Date(schedule.date).toLocaleDateString('id-ID', { 
                 weekday: 'long', 
                 year: 'numeric', 
@@ -213,7 +213,7 @@ export default function ScheduleDetailPage() {
               })}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <Badge 
               variant={
                 schedule.status === 'ACTIVE' ? 'default' : 
@@ -226,9 +226,9 @@ export default function ScheduleDetailPage() {
                 'bg-orange-500'
               }
             >
-              {schedule.status === 'ACTIVE' && <QrCode className="h-3 w-3 mr-1" />}
-              {schedule.status === 'SCHEDULED' && <Ban className="h-3 w-3 mr-1" />}
-              {schedule.status === 'CLOSED' && <CheckCircle className="h-3 w-3 mr-1" />}
+              {schedule.status === 'ACTIVE' && <QrCode className="h-6 w-3 mr-1" />}
+              {schedule.status === 'SCHEDULED' && <Ban className="h-6 w-3 mr-1" />}
+              {schedule.status === 'CLOSED' && <CheckCircle className="h-8 w-3 mr-1" />}
               {schedule.status}
             </Badge>
             <Button
@@ -264,7 +264,7 @@ export default function ScheduleDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
         {/* QR Code Card */}
         <Card className="lg:col-span-1">
           <CardHeader>
@@ -278,11 +278,11 @@ export default function ScheduleDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {schedule.qrCodeImage && (
-              <div className="bg-white p-4 rounded-lg border">
+              <div className="bg-white p-4 rounded-lg border flex justify-center">
                 <img 
                   src={schedule.qrCodeImage} 
                   alt="QR Code"
-                  className="w-full h-auto"
+                  className="w-40 h-40 sm:w-56 sm:h-56 object-contain mx-auto"
                 />
               </div>
             )}
@@ -320,7 +320,7 @@ export default function ScheduleDetailPage() {
         {/* Attendance List */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
@@ -337,17 +337,17 @@ export default function ScheduleDetailPage() {
             </div>
 
             {/* Statistics */}
-            <div className="grid grid-cols-3 gap-4 pt-4">
-              <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
-                <p className="text-2xl font-bold text-yellow-600">{pendingCount}</p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-4">
+              <div className="text-center p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
+                <p className="text-lg sm:text-2xl font-bold text-yellow-600">{pendingCount}</p>
                 <p className="text-xs text-yellow-600">Pending</p>
               </div>
-              <div className="text-center p-3 bg-green-50 dark:bg-green-950 rounded-lg">
-                <p className="text-2xl font-bold text-green-600">{confirmedCount}</p>
+              <div className="text-center p-2 sm:p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                <p className="text-lg sm:text-2xl font-bold text-green-600">{confirmedCount}</p>
                 <p className="text-xs text-green-600">Confirmed</p>
               </div>
-              <div className="text-center p-3 bg-red-50 dark:bg-red-950 rounded-lg">
-                <p className="text-2xl font-bold text-red-600">{rejectedCount}</p>
+              <div className="text-center p-2 sm:p-3 bg-red-50 dark:bg-red-950 rounded-lg">
+                <p className="text-lg sm:text-2xl font-bold text-red-600">{rejectedCount}</p>
                 <p className="text-xs text-red-600">Rejected</p>
               </div>
             </div>
@@ -362,20 +362,20 @@ export default function ScheduleDetailPage() {
                 attendances.map((attendance) => (
                   <div 
                     key={attendance.id}
-                    className="flex items-start gap-4 p-4 border rounded-lg"
+                    className="flex flex-col sm:flex-row items-start gap-4 p-4 border rounded-lg"
                   >
                     {/* Selfie */}
                     <img
                       src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${attendance.selfieImage}`}
                       alt={attendance.studentName}
-                      className="w-16 h-16 rounded-lg object-cover"
+                      className="w-20 h-20 sm:w-16 sm:h-16 rounded-lg object-cover mb-2 sm:mb-0"
                     />
 
                     {/* Info */}
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between">
+                    <div className="flex-1 w-full">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                         <div>
-                          <h4 className="font-semibold">{attendance.studentName}</h4>
+                          <h4 className="font-semibold text-base sm:text-lg">{attendance.studentName}</h4>
                           <p className="text-sm text-muted-foreground">{attendance.studentNpm}</p>
                           <p className="text-xs text-muted-foreground mt-1">
                             {new Date(attendance.scannedAt).toLocaleTimeString('id-ID')}
@@ -393,11 +393,12 @@ export default function ScheduleDetailPage() {
 
                       {/* Actions for PENDING */}
                       {attendance.status === 'PENDING' && (
-                        <div className="flex gap-2 mt-3">
+                        <div className="flex gap-2 mt-3 flex-col sm:flex-row w-full">
                           <Button
                             size="sm"
                             onClick={() => handleConfirm(attendance.id)}
                             disabled={confirmingId === attendance.id}
+                            className="w-full sm:w-auto"
                           >
                             {confirmingId === attendance.id ? (
                               <Loader2 className="mr-2 h-3 w-3 animate-spin" />
@@ -411,6 +412,7 @@ export default function ScheduleDetailPage() {
                             variant="destructive"
                             onClick={() => handleReject(attendance.id)}
                             disabled={rejectingId === attendance.id}
+                            className="w-full sm:w-auto"
                           >
                             {rejectingId === attendance.id ? (
                               <Loader2 className="mr-2 h-3 w-3 animate-spin" />

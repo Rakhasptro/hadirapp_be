@@ -608,48 +608,40 @@ export function ProfilePage() {
                   </div>
 
                   {/* Email Personal */}
-                  {profile.profile.email && (
-                    <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                      <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-muted-foreground">Email Personal</p>
-                        <p className="text-base mt-1">{profile.profile.email}</p>
-                      </div>
+                  <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+                    <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">Email Personal</p>
+                      <p className="text-base mt-1">{profile.profile.email || '-'}</p>
                     </div>
-                  )}
+                  </div>
 
                   {/* Gender */}
-                  {profile.profile.gender && (
-                    <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                      <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-muted-foreground">Jenis Kelamin</p>
-                        <p className="text-base mt-1">{getGenderLabel(profile.profile.gender)}</p>
-                      </div>
+                  <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+                    <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">Jenis Kelamin</p>
+                      <p className="text-base mt-1">{getGenderLabel(profile.profile.gender)}</p>
                     </div>
-                  )}
+                  </div>
 
                   {/* Phone */}
-                  {profile.profile.phone && (
-                    <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                      <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-muted-foreground">Telepon</p>
-                        <p className="text-base mt-1">{profile.profile.phone}</p>
-                      </div>
+                  <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+                    <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">Telepon</p>
+                      <p className="text-base mt-1">{profile.profile.phone || '-'}</p>
                     </div>
-                  )}
+                  </div>
 
                   {/* Address */}
-                  {profile.profile.address && (
-                    <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                      <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-muted-foreground">Alamat</p>
-                        <p className="text-base mt-1 whitespace-pre-line">{profile.profile.address}</p>
-                      </div>
+                  <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">Alamat</p>
+                      <p className="text-base mt-1 whitespace-pre-line">{profile.profile.address || '-'}</p>
                     </div>
-                  )}
+                  </div>
                 </>
               )}
 
