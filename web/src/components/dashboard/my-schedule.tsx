@@ -116,17 +116,17 @@ export function MySchedule() {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-6 px-4">
         {schedules.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
             Tidak ada jadwal mendatang
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-4">
             {schedules.map((schedule) => (
               <div
                 key={schedule.id}
-                className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 rounded-lg border p-4 bg-background hover:bg-muted/50 transition-colors"
               >
                 <div 
                   className="space-y-1 min-w-0 flex-1 cursor-pointer"

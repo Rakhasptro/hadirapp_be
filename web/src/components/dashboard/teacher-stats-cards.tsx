@@ -101,10 +101,10 @@ export function TeacherStatsCards() {
   ]
 
   return (
-    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       {cards.map((stat) => (
         <Card key={stat.title}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
             <CardTitle className="text-xs sm:text-sm font-medium">
               {stat.title}
             </CardTitle>
@@ -112,7 +112,7 @@ export function TeacherStatsCards() {
               <stat.icon className={`h-3 w-3 sm:h-4 sm:w-4 ${stat.color}`} />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 pb-4">
             <div className="text-xl sm:text-2xl font-bold">
               {stat.value.toLocaleString()}
             </div>

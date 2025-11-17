@@ -92,7 +92,6 @@ export function MainLayout() {
         </SidebarHeader>
         
         <SidebarContent>
-          {/* TEACHER Menu - Only role in the system */}
           {isTeacher && (
             <>
               <Collapsible defaultOpen className="group/collapsible">
@@ -258,8 +257,10 @@ export function MainLayout() {
             <ModeToggle />
           </div>
         </header>
-        <main className="flex-1 overflow-auto">
-          <Outlet />
+        <main className="flex-1 overflow-auto px-4 sm:px-8 lg:px-16">
+          <div className="w-full max-w-7xl mx-auto">
+            <Outlet />
+          </div>
         </main>
       </SidebarInset>
     </SidebarProvider>
