@@ -145,63 +145,6 @@ export default function TeacherDashboard() {
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/schedules/create')}>
-          <CardHeader>
-            <div className="p-2 bg-primary/10 rounded-lg w-fit mb-2">
-              <QrCode className="h-5 w-5 text-primary" />
-            </div>
-            <CardTitle className="text-lg">Buat Jadwal Baru</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Buat jadwal perkuliahan dan generate QR Code untuk absensi mahasiswa
-            </p>
-            <Button className="w-full">
-              Mulai Buat Jadwal
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/schedules')}>
-          <CardHeader>
-            <div className="p-2 bg-blue-100 dark:bg-blue-950 rounded-lg w-fit mb-2">
-              <Calendar className="h-5 w-5 text-blue-600" />
-            </div>
-            <CardTitle className="text-lg">Lihat Semua Jadwal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Kelola dan lihat detail semua jadwal perkuliahan Anda
-            </p>
-            <Button variant="outline" className="w-full">
-              Buka Jadwal
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/attendance/pending')}>
-          <CardHeader>
-            <div className="p-2 bg-yellow-100 dark:bg-yellow-950 rounded-lg w-fit mb-2">
-              <CheckCircle className="h-5 w-5 text-yellow-600" />
-            </div>
-            <CardTitle className="text-lg">Validasi Kehadiran</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              {stats.pendingAttendances} kehadiran menunggu validasi Anda
-            </p>
-            <Button variant="outline" className="w-full">
-              Lihat Pending
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Pending Attendances */}
       {pendingAttendances.length > 0 && (
         <Card>

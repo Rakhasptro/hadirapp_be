@@ -73,6 +73,7 @@ export function TeacherStatsCards() {
     )
   }
 
+  // Only show stats cards, remove menu cards for 'membuat jadwal baru', 'list semua jadwal', 'validasi kehadiran'
   const cards = [
     {
       title: "Jadwal Hari Ini",
@@ -100,6 +101,7 @@ export function TeacherStatsCards() {
     },
   ]
 
+  // Only show stats cards, no menu cards
   return (
     <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       {cards.map((stat) => (

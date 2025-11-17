@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"
 import {
   Sidebar,
   SidebarContent,
@@ -45,12 +46,33 @@ import {
 import { useNavigate, Outlet, useLocation } from "react-router-dom"
 import { ModeToggle } from "@/components/mode-toggle"
 import { authService } from "@/lib/auth"
+import { teacherService } from "@/lib/api"
 
 export function MainLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const user = authService.getUser()
   const isTeacher = user?.role === 'TEACHER'
+
+  const [pendingCount, setPendingCount] = useState(0)
+
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const stats = await teacherService.getDashboardStats()
+        setPendingCount(stats.pendingAttendances)
+      } catch (error) {
+        console.error('Failed to fetch pending count:', error)
+      }
+    }
+
+    if (isTeacher) {
+      fetchPendingCount()
+      // Refresh every 30 seconds
+      const interval = setInterval(fetchPendingCount, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [isTeacher])
 
   const handleLogout = () => {
     authService.logout()
@@ -145,7 +167,7 @@ export function MainLayout() {
                           >
                             <CalendarCheck />
                             <span>Validasi Kehadiran</span>
-                            <Badge variant="secondary" className="ml-auto">8</Badge>
+                            <Badge variant="secondary" className="ml-auto">{pendingCount}</Badge>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       </SidebarMenu>
