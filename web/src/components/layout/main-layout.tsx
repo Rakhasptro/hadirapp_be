@@ -26,7 +26,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { 
   ChevronRight,
@@ -51,38 +51,72 @@ import { teacherService } from "@/lib/api"
 export function MainLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const user = authService.getUser()
+  const [user, setUser] = useState(authService.getUser())
   const isTeacher = user?.role === 'TEACHER'
 
   const [pendingCount, setPendingCount] = useState(0)
 
+  // Listen for profile updates from the profile page. When received,
+  // fetch the freshest user data from the API and update localStorage.
   useEffect(() => {
-    const fetchPendingCount = async () => {
+    const reloadUser = async () => {
       try {
-        const stats = await teacherService.getDashboardStats()
-        setPendingCount(stats.pendingAttendances)
+        const fresh = await teacherService.getProfile()
+        if (fresh) {
+          setUser(fresh)
+          localStorage.setItem('user', JSON.stringify(fresh))
+        }
       } catch (error) {
-        console.error('Failed to fetch pending count:', error)
+        // keep console error for visibility when debugging
+        console.error('Failed to reload user:', error)
       }
     }
 
-    if (isTeacher) {
-      fetchPendingCount()
-      // Refresh every 30 seconds
-      const interval = setInterval(fetchPendingCount, 30000)
-      return () => clearInterval(interval)
-    }
-  }, [isTeacher])
+    window.addEventListener('profileUpdated', reloadUser)
+    return () => window.removeEventListener('profileUpdated', reloadUser)
+  }, [])
 
   const handleLogout = () => {
     authService.logout()
     navigate('/login')
   }
 
+  const getPhotoUrl = (photo: string | null) => {
+    if (!photo) return null
+    if (photo.startsWith('http')) return photo
+    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+    const apiBaseURL = baseURL.replace('/api', '')
+    return `${apiBaseURL}${photo}`
+  }
+
   const getUserInitials = () => {
     if (!user) return 'U'
     return user.email.substring(0, 2).toUpperCase()
   }
+
+  // Fetch pending count for sidebar badge. Keep it lightweight.
+  useEffect(() => {
+    let mounted = true
+    const fetchPending = async () => {
+      try {
+        const stats = await teacherService.getDashboardStats()
+        if (mounted && stats && typeof stats.pendingAttendances === 'number') {
+          setPendingCount(stats.pendingAttendances)
+        }
+      } catch (err) {
+        // ignore errors for badge
+      }
+    }
+
+    if (isTeacher) {
+      fetchPending()
+      const id = setInterval(fetchPending, 30000)
+      return () => {
+        mounted = false
+        clearInterval(id)
+      }
+    }
+  }, [isTeacher])
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/')
@@ -238,6 +272,7 @@ export function MainLayout() {
                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   >
                     <Avatar className="h-8 w-8 rounded-lg">
+                      {user?.profile?.photo && <AvatarImage src={getPhotoUrl(user.profile.photo) || undefined} alt={user.email} />}
                       <AvatarFallback className="rounded-lg">
                         {getUserInitials()}
                       </AvatarFallback>

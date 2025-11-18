@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from '@/lib/axios'
+import { authService } from '@/lib/auth'
 import {
   Card,
   CardContent,
@@ -81,6 +82,9 @@ export function ProfilePage() {
       const response = await axios.get('/profile')
       const userData = response.data.user
       setProfile(userData)
+
+      // Update localStorage to keep sidebar in sync
+      localStorage.setItem('user', JSON.stringify(userData))
 
       // Initialize form data
       if (userData.role === 'TEACHER' && userData.profile) {
@@ -211,10 +215,10 @@ export function ProfilePage() {
         description: 'Profil berhasil diperbarui',
       })
 
-      // Refresh profile data
+      console.log('Profile updated, photoUrl:', photoUrl)
+
+      // Refresh profile data and notify layout to reload freshest user
       await fetchProfile()
-      
-      // Trigger profile update event for sidebar
       window.dispatchEvent(new Event('profileUpdated'))
       
       // Clear photo upload state
