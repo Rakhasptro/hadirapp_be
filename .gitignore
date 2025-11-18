@@ -42,3 +42,7 @@ Thumbs.db
 # Backup files
 *.bak
 *.backup
+
+# Ignore uploaded runtime files (photos, selfies)
+# These are user-uploaded binaries that should not be committed
+hadir_be/uploads/
