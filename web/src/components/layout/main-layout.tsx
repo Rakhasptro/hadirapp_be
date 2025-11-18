@@ -167,7 +167,14 @@ export function MainLayout() {
                           >
                             <CalendarCheck />
                             <span>Validasi Kehadiran</span>
-                            <Badge variant="secondary" className="ml-auto">{pendingCount}</Badge>
+                            {pendingCount > 0 && (
+                              <Badge 
+                                variant={pendingCount > 5 ? "destructive" : "secondary"} 
+                                className={`ml-auto ${pendingCount > 10 ? 'animate-pulse' : ''}`}
+                              >
+                                {pendingCount}
+                              </Badge>
+                            )}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       </SidebarMenu>
