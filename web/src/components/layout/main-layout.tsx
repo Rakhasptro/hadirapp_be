@@ -101,7 +101,7 @@ export function MainLayout() {
         if (mounted && stats && typeof stats.pendingAttendances === 'number') {
           setPendingCount(stats.pendingAttendances)
         }
-      } catch (err) {
+      } catch {
         // ignore errors for badge
       }
     }
