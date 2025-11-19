@@ -122,7 +122,7 @@ export default function ScheduleDetailPage() {
         title: 'Berhasil',
         description: 'Data absensi berhasil diexport',
       });
-    } catch (error) {
+    } catch {
       toast({
         variant: 'destructive',
         title: 'Error',
