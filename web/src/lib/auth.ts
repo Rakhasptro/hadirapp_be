@@ -11,15 +11,17 @@ interface RegisterData {
   role?: string;
 }
 
+interface User {
+  id: string;
+  email: string;
+  role: string;
+  profile?: Record<string, unknown>;
+}
+
 interface AuthResponse {
   message: string;
   access_token: string;
-  user: {
-    id: string;
-    email: string;
-    role: string;
-    profile: any;
-  };
+  user: User;
 }
 
 export const authService = {
@@ -33,12 +35,12 @@ export const authService = {
     return response.data;
   },
 
-  async register(data: RegisterData): Promise<any> {
+  async register(data: RegisterData): Promise<unknown> {
     const response = await axios.post('/auth/register', data);
     return response.data;
   },
 
-  async resetPassword(data: { email: string; newPassword: string }): Promise<any> {
+  async resetPassword(data: { email: string; newPassword: string }): Promise<unknown> {
     // Endpoint backend yang harus disediakan: /auth/reset-password
     const response = await axios.post('/auth/reset-password', data);
     return response.data;
@@ -53,9 +55,14 @@ export const authService = {
     return localStorage.getItem('token');
   },
 
-  getUser(): any {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+  getUser(): User | null {
+    const user = localStorage.getItem('user')
+    if (!user) return null
+    try {
+      return JSON.parse(user) as User
+    } catch {
+      return null
+    }
   },
 
   isAuthenticated(): boolean {
