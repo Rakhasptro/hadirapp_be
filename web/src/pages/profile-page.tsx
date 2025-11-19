@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import axios from '@/lib/axios'
-import { authService } from '@/lib/auth'
 import {
   Card,
   CardContent,

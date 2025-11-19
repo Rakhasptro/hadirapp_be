@@ -7,11 +7,11 @@ import {
   Users,
   CheckCircle,
   Clock,
-  QrCode,
-  ArrowRight,
+  
   Loader2,
   AlertCircle
 } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { teacherService, attendanceService, Attendance } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/lib/auth';
@@ -144,6 +144,19 @@ export default function TeacherDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Alert banner for pending attendances */}
+      {stats.pendingAttendances > 0 && (
+        <Alert variant="warning" className="mb-6">
+          <AlertCircle className="h-5 w-5 text-yellow-700" />
+          <div>
+            <AlertTitle>Perlu validasi kehadiran ({stats.pendingAttendances})</AlertTitle>
+            <AlertDescription>
+              Terdapat {stats.pendingAttendances} absen menunggu konfirmasi. Klik tombol "Lihat Semua" di bawah untuk meninjau.
+            </AlertDescription>
+          </div>
+        </Alert>
+      )}
 
       {/* Pending Attendances */}
       {pendingAttendances.length > 0 && (

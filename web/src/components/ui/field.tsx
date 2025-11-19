@@ -4,6 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
   return (
@@ -221,14 +222,9 @@ function FieldError({
   }
 
   return (
-    <div
-      role="alert"
-      data-slot="field-error"
-      className={cn("text-destructive text-sm font-normal", className)}
-      {...props}
-    >
-      {content}
-    </div>
+    <Alert variant="destructive" className={cn("mt-2", className)} {...props}>
+      <AlertDescription>{content}</AlertDescription>
+    </Alert>
   )
 }
 

@@ -3,7 +3,7 @@
 # Test Submit Attendance with Multipart Form Data
 # Ganti SCHEDULE_ID dengan ID dari schedule yang sudah dibuat
 
-SCHEDULE_ID="b4af0134-1e6e-47e4-a183-6a061ba64060"
+SCHEDULE_ID="013e2b46-a501-48bd-b004-4f678a6a3129"
 API_URL="http://localhost:3000/api"
 
 echo "=== Test Submit Attendance ==="
@@ -48,14 +48,28 @@ curl -X POST "$API_URL/attendance/submit" \
   -F "selfie=@/tmp/dummy_selfie.png"
 echo -e "\n"
 
-# Test 5: Submit attendance mahasiswa 5
-echo "5. Submit attendance - Riko Pratama (NPM: 2021005)"
-curl -X POST "$API_URL/attendance/submit" \
+# Test 5: Submit attendance mahasiswa 5, then mark as izin sakit (reject with reason)
+echo "5. Submit attendance - Riko Pratama (NPM: 2021005) -> mark as Izin Sakit"
+response=$(curl -s -X POST "$API_URL/attendance/submit" \
   -F "scheduleId=$SCHEDULE_ID" \
   -F "studentName=Riko Pratama" \
   -F "studentNpm=2021005" \
-  -F "selfie=@/tmp/dummy_selfie.png"
-echo -e "\n"
+  -F "selfie=@/tmp/dummy_selfie.png")
+
+echo "Response: $response"
+
+# Extract attendance id from response (look for first "id":"..." occurrence)
+attendance_id=$(echo "$response" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p' | head -n1)
+
+if [ -n "$attendance_id" ]; then
+  echo "Marking attendance $attendance_id as 'Izin sakit' (reject with reason)"
+  curl -s -X PATCH "$API_URL/attendance/$attendance_id/reject" \
+    -H "Content-Type: application/json" \
+    -d '{"reason":"Izin sakit"}'
+  echo -e "\n"
+else
+  echo "Could not extract attendance id from response; skipping reject step"
+fi
 
 # Cleanup
 rm -f /tmp/dummy_selfie.png
