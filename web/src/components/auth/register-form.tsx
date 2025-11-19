@@ -56,11 +56,13 @@ export function RegisterForm({ onSwitchToLogin, onSuccess }: RegisterFormProps) 
       setTimeout(() => {
         onSuccess();
       }, 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Registration error:', err);
-      const message = err.response?.data?.message || 'Registrasi gagal. Email mungkin sudah terdaftar.';
-      setError(message);
-      toast.error(message);
+      type RespErr = { response?: { data?: { message?: string } } }
+      const e = err as RespErr
+      const message = e.response?.data?.message || 'Registrasi gagal. Email mungkin sudah terdaftar.'
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false);
     }

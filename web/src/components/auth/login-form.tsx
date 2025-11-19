@@ -38,16 +38,14 @@ interface LoginFormProps {
         password: formData.password
       });
       navigate('/teacher/dashboard');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      console.error('Response data:', err.response?.data);
       console.error('Request data:', { email: formData.email, password: '***' });
-      
-      const errorMessage = err.response?.data?.message || 
-                          err.response?.data?.error || 
-                          err.message ||
-                          'Login failed. Please check your credentials.';
-      setError(errorMessage);
+
+      type RespErr = { response?: { data?: { message?: string; error?: string } }; message?: string }
+      const e = err as RespErr
+      const errorMessage = e.response?.data?.message || e.response?.data?.error || e.message || 'Login failed. Please check your credentials.'
+      setError(errorMessage)
     } finally {
       setIsLoading(false);
     }

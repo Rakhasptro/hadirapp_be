@@ -41,9 +41,12 @@ export function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFormProps)
       setTimeout(() => {
         onSwitchToLogin();
       }, 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Gagal reset password. Email tidak ditemukan.');
-      toast.error(error);
+    } catch (err: unknown) {
+      type RespErr = { response?: { data?: { message?: string } } }
+      const e = err as RespErr
+      const message = e.response?.data?.message || 'Gagal reset password. Email tidak ditemukan.'
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false);
     }
