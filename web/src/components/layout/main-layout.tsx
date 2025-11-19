@@ -39,9 +39,7 @@ import {
   CalendarCheck,
   GraduationCap,
   BookOpen,
-  Calendar,
-  FileText,
-  BellRing
+  Calendar
 } from "lucide-react"
 import { useNavigate, Outlet, useLocation } from "react-router-dom"
 import { ModeToggle } from "@/components/mode-toggle"
@@ -217,47 +215,6 @@ export function MainLayout() {
                 </SidebarGroup>
               </Collapsible>
               
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarGroup>
-                  <SidebarGroupLabel asChild>
-                    <CollapsibleTrigger>
-                      Lainnya
-                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                    </CollapsibleTrigger>
-                  </SidebarGroupLabel>
-                  <CollapsibleContent>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        <SidebarMenuItem>
-                          <SidebarMenuButton tooltip="Leave Requests">
-                            <FileText />
-                            <span>Izin Siswa</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        <SidebarMenuItem>
-                          <SidebarMenuButton tooltip="Notifications">
-                            <BellRing />
-                            <span>Notifikasi</span>
-                            <Badge variant="destructive" className="ml-auto">2</Badge>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        <SidebarMenuItem>
-                          <SidebarMenuButton 
-                            tooltip="Profile" 
-                            onClick={() => navigate('/profile')}
-                            isActive={isActive('/profile')}
-                          >
-                            <User />
-                            <span>Profil Saya</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </CollapsibleContent>
-                </SidebarGroup>
-              </Collapsible>
             </>
           )}
         </SidebarContent>
