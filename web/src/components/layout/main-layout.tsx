@@ -38,7 +38,7 @@ import {
   LayoutDashboard,
   CalendarCheck,
   GraduationCap,
-  BookOpen,
+  // BookOpen removed; 'Kelas Saya' menu item removed
   Calendar
 } from "lucide-react"
 import { useNavigate, Outlet, useLocation } from "react-router-dom"
@@ -181,15 +181,7 @@ export function MainLayout() {
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                         
-                        <SidebarMenuItem>
-                          <SidebarMenuButton 
-                            tooltip="My Classes"
-                            isActive={isActive('/classes')}
-                          >
-                            <BookOpen />
-                            <span>Kelas Saya</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
+                        {/* 'Kelas Saya' removed — feature disabled */}
                         
                         <SidebarMenuItem>
                           <SidebarMenuButton 
