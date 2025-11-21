@@ -88,9 +88,13 @@ export function MainLayout() {
   }
 
   const getUserInitials = () => {
-    if (!user) return 'U'
+    if (!user || typeof user.email !== 'string') return 'U'
     return user.email.substring(0, 2).toUpperCase()
   }
+
+  // Safely derive photo and alt text — user.profile may be untyped/unknown
+  const photo = typeof user?.profile?.photo === 'string' ? user.profile.photo : null
+  const altText = typeof user?.email === 'string' ? user.email : undefined
 
   // Fetch pending count for sidebar badge. Keep it lightweight.
   useEffect(() => {
@@ -221,7 +225,7 @@ export function MainLayout() {
                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   >
                     <Avatar className="h-8 w-8 rounded-lg">
-                      {user?.profile?.photo && <AvatarImage src={getPhotoUrl(user.profile.photo) || undefined} alt={user.email} />}
+                      {photo && <AvatarImage src={getPhotoUrl(photo) ?? undefined} alt={altText} />}
                       <AvatarFallback className="rounded-lg">
                         {getUserInitials()}
                       </AvatarFallback>
