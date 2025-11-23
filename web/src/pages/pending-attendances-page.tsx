@@ -21,6 +21,15 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { attendanceService, Attendance } from '@/lib/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PendingAttendancesPage() {
@@ -32,6 +41,9 @@ export default function PendingAttendancesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState<string>('all');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPendingAttendances();
@@ -71,23 +83,28 @@ export default function PendingAttendancesPage() {
     }
   };
 
-  const handleReject = async (id: string) => {
-    const reason = prompt('Alasan penolakan:');
-    if (!reason) return;
+  const handleReject = (id: string) => {
+    setRejectingId(id);
+    setRejectReason('');
+    setRejectDialogOpen(true);
+  };
+
+  const submitReject = async () => {
+    if (!rejectingId) return;
+    if (!rejectReason.trim()) {
+      toast({ variant: 'destructive', title: 'Alasan kosong', description: 'Masukkan alasan penolakan' });
+      return;
+    }
 
     try {
-      await attendanceService.rejectAttendance(id, reason);
-      toast({
-        title: 'Berhasil',
-        description: 'Kehadiran telah ditolak',
-      });
-      fetchPendingAttendances(); // Refresh
+      await attendanceService.rejectAttendance(rejectingId, rejectReason.trim());
+      toast({ title: 'Berhasil', description: 'Kehadiran telah ditolak' });
+      setRejectDialogOpen(false);
+      setRejectingId(null);
+      setRejectReason('');
+      fetchPendingAttendances();
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.response?.data?.message || 'Gagal menolak',
-      });
+      toast({ variant: 'destructive', title: 'Error', description: error.response?.data?.message || 'Gagal menolak' });
     }
   };
 
@@ -255,6 +272,31 @@ export default function PendingAttendancesPage() {
       )}
 
       {/* Image Modal */}
+      {/* Reject Reason Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alasan penolakan</DialogTitle>
+            <DialogDescription>Berikan alasan penolakan untuk kehadiran ini.</DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-2">
+            <Textarea
+              placeholder="Masukkan alasan penolakan..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            />
+          </div>
+
+          <DialogFooter>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>Batal</Button>
+              <Button variant="destructive" onClick={submitReject}>Kirim Penolakan</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {selectedImage && (
         <div
           className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"

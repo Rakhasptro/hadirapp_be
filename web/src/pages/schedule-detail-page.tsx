@@ -19,6 +19,15 @@ import {
 } from 'lucide-react';
 import { scheduleService, attendanceService, Schedule, Attendance } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function ScheduleDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -31,6 +40,9 @@ export default function ScheduleDetailPage() {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [togglingStatus, setTogglingStatus] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [pendingRejectId, setPendingRejectId] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -80,23 +92,29 @@ export default function ScheduleDetailPage() {
   };
 
   const handleReject = async (attendanceId: string) => {
-    const reason = prompt('Alasan penolakan:');
-    if (!reason) return;
+    // open dialog to collect reason
+    setPendingRejectId(attendanceId);
+    setRejectReason('');
+    setRejectDialogOpen(true);
+  };
 
-    setRejectingId(attendanceId);
+  const submitReject = async () => {
+    if (!pendingRejectId) return;
+    if (!rejectReason.trim()) {
+      toast({ variant: 'destructive', title: 'Alasan kosong', description: 'Masukkan alasan penolakan' });
+      return;
+    }
+
+    setRejectingId(pendingRejectId);
     try {
-      await attendanceService.rejectAttendance(attendanceId, reason);
-      toast({
-        title: 'Berhasil',
-        description: 'Kehadiran telah ditolak',
-      });
+      await attendanceService.rejectAttendance(pendingRejectId, rejectReason.trim());
+      toast({ title: 'Berhasil', description: 'Kehadiran telah ditolak' });
+      setRejectDialogOpen(false);
+      setPendingRejectId(null);
+      setRejectReason('');
       await fetchData(); // Refresh data
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.response?.data?.message || 'Gagal menolak',
-      });
+      toast({ variant: 'destructive', title: 'Error', description: error.response?.data?.message || 'Gagal menolak' });
     } finally {
       setRejectingId(null);
     }
@@ -181,6 +199,7 @@ export default function ScheduleDetailPage() {
           </CardContent>
         </Card>
       </div>
+          
     );
   }
 
@@ -438,6 +457,30 @@ export default function ScheduleDetailPage() {
           </CardContent>
         </Card>
       </div>
+      {/* Reject Reason Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alasan penolakan</DialogTitle>
+            <DialogDescription>Berikan alasan penolakan untuk kehadiran ini.</DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-2">
+            <Textarea
+              placeholder="Masukkan alasan penolakan..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            />
+          </div>
+
+          <DialogFooter>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>Batal</Button>
+              <Button variant="destructive" onClick={submitReject} disabled={rejectingId !== null}>Kirim Penolakan</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
