@@ -10,13 +10,13 @@ export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Get()
-  @Roles('ADMIN')
+  @Roles('TEACHER')
   async getAll() {
     return this.usersService.findAll();
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'TEACHER')
+  @Roles('TEACHER')
   async getOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
