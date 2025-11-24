@@ -34,7 +34,7 @@ export class TeachersController {
     return this.teachersService.getMyClasses(req.user);
   }
 
-  // POST /teachers (Biasanya hanya oleh ADMIN)
+  // POST /teachers (Biasanya hanya oleh TEACHER or privileged user)
   @Post()
   create(@Body() createTeacherDto: CreateTeacherDto) {
     return this.teachersService.create(createTeacherDto);
@@ -58,7 +58,7 @@ export class TeachersController {
     return this.teachersService.update(id, updateTeacherDto);
   }
 
-  // DELETE /teachers/:id (Biasanya hanya oleh ADMIN)
+  // DELETE /teachers/:id (Biasanya hanya oleh TEACHER or privileged user)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT) // Mengembalikan 204 No Content untuk operasi penghapusan sukses
   remove(@Param('id') id: string) {

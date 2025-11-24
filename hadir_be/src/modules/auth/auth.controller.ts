@@ -14,7 +14,7 @@ class RegisterDto {
   @MinLength(6)
   password: string;
 
-  @ApiProperty({ example: 'STUDENT', description: 'Role: ADMIN | STUDENT | TEACHER', required: false })
+  @ApiProperty({ example: 'STUDENT', description: 'Role: STUDENT | TEACHER', required: false })
   @IsOptional()
   role?: string;
 }
