@@ -67,7 +67,6 @@ model teachers {
   course_schedules course_schedules[]
 }
 
-// Model users (hanya TEACHER, tidak ada ADMIN dan STUDENT)
 model users {
   id        String     @id @default(uuid())
   email     String     @unique
@@ -82,6 +81,7 @@ model users {
 // Enums
 enum users_role {
   TEACHER
+  STUDENT
 }
 
 enum course_schedules_status {
