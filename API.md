@@ -119,6 +119,31 @@ Base path: `/schedules` (protected - teacher role)
 
 ---
 
+## Student (Mobile)
+
+- Intended Role: `STUDENT` (used by mobile apps)
+  - Notes: Student accounts are primarily used by the mobile application to submit attendance and view schedule verification. The backend currently accepts attendance submissions via a public endpoint (no role required), but the `STUDENT` role is included in the schema for future authenticated flows.
+
+- POST `/auth/register`
+  - Description: Register a student account (optional when creating accounts via admin/teacher). Include `role: "STUDENT"` to create a student user.
+  - Body example: `{ "email": "student@example.com", "password": "studentpass", "role": "STUDENT" }`
+  - Auth: none
+
+- POST `/auth/login`
+  - Description: Login (returns JWT). Mobile apps should store the token and include `Authorization: Bearer <token>` for protected endpoints when implemented.
+
+- POST `/attendance/submit`
+  - Description: Submit attendance with selfie image. This endpoint is the main submission flow used by students (multipart/form-data: `selfie`, `scheduleId`, `studentName`, `studentNpm`).
+  - Auth: none (public submission), but clients may later switch to authenticated submissions using `STUDENT` JWT.
+
+- GET `/public/schedules/verify/:qrCode`
+  - Description: Verify a scanned QR code for a schedule (students use this to validate which schedule the QR belongs to before submitting attendance).
+  - Auth: none
+
+---
+
+---
+
 ## Teachers
 Base path: `/teachers`
 
@@ -135,8 +160,8 @@ Base path: `/teachers`
   - Auth: JWT, Role `TEACHER`
 
 - POST `/teachers`
-  - Description: Create teacher (typically admin)
-  - Auth: none declared at method level (check guards if needed)
+  - Description: Create teacher (restricted/privileged)
+  - Auth: check controller guards (may require `TEACHER` or privileged role)
 
 - GET `/teachers`
   - Description: List teachers
@@ -156,16 +181,16 @@ Base path: `/teachers`
 
 ---
 
-## Users (Admin)
+## Users (Restricted)
 Base path: `/users` (guarded by JWT + RolesGuard)
 
 - GET `/users`
   - Description: Get all users
-  - Auth: JWT, Role `ADMIN`
+  - Auth: JWT, Role `TEACHER`
 
 - GET `/users/:id`
   - Description: Get user by id
-  - Auth: JWT, Role `ADMIN | TEACHER`
+  - Auth: JWT, Role `TEACHER`
 
 ---
 
