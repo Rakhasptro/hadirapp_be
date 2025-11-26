@@ -16,7 +16,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Roles('TEACHER')
+  @Roles('TEACHER', 'STUDENT')
   async getOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }

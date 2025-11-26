@@ -23,30 +23,37 @@ export class AuthService {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    // Create teacher user (only role available)
+    // Determine role to create
+    const normalizedRole = (role || '').toString().toUpperCase();
+    const allowedRoles = ['TEACHER', 'STUDENT'];
+    const roleValue = allowedRoles.includes(normalizedRole) ? (normalizedRole as users_role) : 'STUDENT';
+
     const user = await this.prisma.users.create({
       data: {
         id: uuidv4(),
         email,
         password: hashed,
-        role: 'TEACHER' as users_role,
+        role: roleValue,
         updatedAt: new Date(),
       },
     });
 
-    // Auto-create teacher profile
-    await this.prisma.teachers.create({
-      data: {
-        id: uuidv4(),
-        userId: user.id,
-        nip: `NIP-${Math.floor(Math.random() * 100000)}`,
-        name: email.split('@')[0],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    });
+    // If teacher was created, also auto-create teacher profile
+    if (roleValue === 'TEACHER') {
+      await this.prisma.teachers.create({
+        data: {
+          id: uuidv4(),
+          userId: user.id,
+          nip: `NIP-${Math.floor(Math.random() * 100000)}`,
+          name: email.split('@')[0],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+      return { message: 'Teacher registered successfully', user };
+    }
 
-    return { message: 'Teacher registered successfully', user };
+    return { message: 'Student registered successfully', user };
   }
 
   async login(email: string, password: string) {
@@ -67,7 +74,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
-      teacherId: user.teachers?.id, // Add teacher ID to JWT payload
+      teacherId: user.teachers?.id, 
     });
 
     return {
