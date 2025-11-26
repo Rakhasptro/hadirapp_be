@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile, Req, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AttendanceService } from './attendance.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -35,7 +35,7 @@ export class AttendanceController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
-      throw new Error('Selfie image is required');
+      throw new BadRequestException('Selfie image is required');
     }
 
     return this.attendanceService.submitAttendance({
@@ -44,6 +44,42 @@ export class AttendanceController {
       studentNpm: body.studentNpm,
       selfieImage: file.path,
     });
+  }
+
+  @Get('session/:sessionId')
+  async checkSession(@Param('sessionId') sessionId: string) {
+    const res = await this.attendanceService.getSessionByToken(sessionId);
+    if (!res) return { valid: false, message: 'Session not found' };
+    return { valid: res.isActive, schedule: res.schedule };
+  }
+
+  @Post('submit/mobile')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STUDENT')
+  async submitMobile(
+    @Body() body: { sessionId: string; studentId?: string; imageUrl?: string; imageBase64?: string; name?: string; timestamp?: string },
+    @Req() req,
+  ) {
+    const studentId = body.studentId || req.user?.sub || req.user?.userId;
+    if (!studentId) throw new BadRequestException('studentId is required');
+
+    return this.attendanceService.createAttendanceFromMobile({
+      sessionId: body.sessionId,
+      studentId,
+      imageUrl: body.imageUrl,
+      imageBase64: body.imageBase64,
+      name: body.name,
+      timestamp: body.timestamp,
+    });
+  }
+
+  @Get('history')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('STUDENT')
+  async getHistory(@Req() req) {
+    const studentId = req.user?.sub || req.user?.userId;
+    if (!studentId) throw new BadRequestException('Unauthorized');
+    return this.attendanceService.listAttendancesByStudent(studentId);
   }
 
   @Get('schedule/:scheduleId')
