@@ -1,215 +1,136 @@
-# HadirApp - API Reference
+# HadirApp - API Reference (mobile-focused)
 
-This document lists the backend HTTP endpoints implemented in the repository (NestJS controllers).
+Base URL: `http://{HOST}:{PORT}/api` (adjust according to your deployment).
 
-Base URL: `http://{HOST}:{PORT}/api` (adjust according to your deployment). The controllers shown here map to paths below the API base.
-
-> Note: Many endpoints require JWT authentication (see `JwtAuthGuard`) and role-based access (`RolesGuard`). When `Auth` is required the header is `Authorization: Bearer <token>`.
+This file focuses on the endpoints your mobile app will use (student flows) plus the teacher endpoints needed for dashboard/export. Many endpoints are protected by JWT (`Authorization: Bearer <token>`) and role checks (`RolesGuard`).
 
 ---
 
-## Public
+## Quick auth notes
+- Register: `POST /auth/register` { email, password, role?: "STUDENT" | "TEACHER" }
+- Login: `POST /auth/login` { email, password } → response contains `access_token` (JWT). The JWT payload includes `sub` (user id), `email`, `role`, and `teacherId` for teachers.
 
-- GET `/`
-  - Description: Health/info endpoint
-  - Auth: none
-  - Response: `{ message: 'HadirApp Backend is running 🚀' }`
-
----
-
-## Auth
-
-- POST `/auth/register`
-  - Description: Register a new user
-  - Body: `{ email: string, password: string, role?: string }`
-  - Auth: none
-  - Response: newly created user (depends on service)
-
-- POST `/auth/login`
-  - Description: Login and receive JWT
-  - Body: `{ email: string, password: string }`
-  - Auth: none
-  - Response: `{ access_token: string, ... }`
+Store the `access_token` in the mobile app and send `Authorization: Bearer <token>` for protected endpoints.
 
 ---
 
-## Upload
+## Upload (used by mobile or web)
 
 - POST `/upload/photo`
-  - Description: Upload a photo file. Uses multipart/form-data field `photo`.
-  - Body: file `photo`
-  - Auth: none (controller does not require auth)
-  - Response: `{ url, filename, size, mimetype }`
-
-- POST `/attendance/submit` (file upload)
-  - Description: Submit attendance with selfie image. Uses multipart/form-data field `selfie` and body fields.
-  - Body (form-data): `selfie` (file), `scheduleId` (string), `studentName` (string), `studentNpm` (string)
-  - Auth: none (public submission endpoint)
-  - Response: created attendance object
+  - multipart/form-data: field `photo` (file)
+  - Auth: optional (controller currently public)
+  - Response: `{ url: string, filename: string, size: number, mimetype: string }`
+  - Use case: mobile can upload selfie first and send returned `url` when submitting attendance.
 
 ---
 
-## Attendance
+## Attendance (mobile + teacher)
 Base path: `/attendance`
 
-- GET `/attendance/schedule/:scheduleId`
-  - Description: Get attendances for a schedule (teacher only)
-  - Auth: JWT, Role `TEACHER`
-  - Params: `scheduleId` (path)
+Endpoints mobile app should use
 
-- GET `/attendance/pending`
-  - Description: List pending attendances for the authenticated teacher
-  - Auth: JWT, Role `TEACHER`
-
-- PATCH `/attendance/:id/confirm`
-  - Description: Confirm a pending attendance (teacher)
-  - Auth: JWT, Role `TEACHER`
-  - Params: `id` (attendance id)
-
-- PATCH `/attendance/:id/reject`
-  - Description: Reject a pending attendance (teacher) with reason
-  - Auth: JWT, Role `TEACHER`
-  - Params: `id` (attendance id)
-  - Body: `{ reason: string }`
-
----
-
-## Schedules (Teacher)
-Base path: `/schedules` (protected - teacher role)
-
-- POST `/schedules`
-  - Description: Create a schedule (teacher)
-  - Auth: JWT, Role `TEACHER`
-  - Body: schedule object (courseName, courseCode, date, startTime, endTime, room?, topic?, ...)
-
-- GET `/schedules`
-  - Description: List schedules for authenticated teacher (supports query)
-  - Auth: JWT, Role `TEACHER`
-
-- GET `/schedules/today`
-  - Description: Get today's active schedules for teacher
-  - Auth: JWT, Role `TEACHER`
-
-- GET `/schedules/:id`
-  - Description: Get schedule by id (public)
+- GET `/attendance/session/:sessionId`
+  - Purpose: validate a scanned QR token (or schedule id). Returns whether the session is active and schedule metadata.
   - Auth: none
+  - Response example:
+    {
+      "valid": true,
+      "schedule": { "id": "...", "courseName": "...", "qrCode": "...", "status":"ACTIVE", ... }
+    }
 
-- PATCH `/schedules/:id/status`
-  - Description: Update schedule status (ACTIVE / SCHEDULED / CLOSED) (teacher)
-  - Auth: JWT, Role `TEACHER`
-  - Body: `{ status: string }`
+- POST `/attendance/submit` (multipart)
+  - Purpose: legacy web/file-upload flow. Use `selfie` file upload.
+  - Body (form-data): `selfie` (file), `scheduleId`, `studentName`, `studentNpm`, optional `studentEmail`
+  - Auth: none (public submission)
+  - Response: created attendance object
 
-- PUT `/schedules/:id`
-  - Description: Update schedule content (teacher)
-  - Auth: JWT, Role `TEACHER`
-  - Body: schedule patch object
+- POST `/attendance/submit/mobile` (JSON) — recommended for mobile
+  - Purpose: mobile-friendly JSON submission (base64 or remote URL)
+  - Auth: recommended: JWT (Role STUDENT) — controller reads `req.user.email` and uses it as `studentEmail` when present
+  - Body JSON examples (two variants):
+    1) using uploaded URL
+    {
+      "sessionId": "<session_token_or_schedule_id>",
+      "studentId": "202219876319",
+      "name": "Rafi",
+      "imageUrl": "https://.../uploads/selfies/..jpg",
+      "timestamp": "2025-11-26T08:05:00Z"
+    }
 
-- DELETE `/schedules/:id`
-  - Description: Delete schedule (teacher)
-  - Auth: JWT, Role `TEACHER`
+    2) using base64 image
+    {
+      "sessionId": "<session_token_or_schedule_id>",
+      "studentId": "202219876319",
+      "name": "Rafi",
+      "imageBase64": "data:image/jpeg;base64,/9j/4AAQ...",
+      "timestamp": "2025-11-26T08:05:00Z"
+    }
+
+  - Important: If JWT is present, backend will set `studentEmail` from `req.user.email`. If you prefer anonymous submit, include `email` in the body and backend will store it.
+
+- GET `/attendance/history`
+  - Purpose: return authenticated student's attendance history (their own records)
+  - Auth: JWT required (Role STUDENT)
+  - Behavior: when JWT contains `email`, the endpoint does an exact lookup by `studentEmail` to reliably return only the student's records. If email is not present it falls back to identifier matching by `studentNpm`/name.
+  - Response: array of attendance objects (id, scheduleId, studentName, studentNpm, studentEmail, selfieImage, status, scannedAt, confirmedAt...)
+
+Teacher endpoints (dashboard)
+
+- GET `/attendance/schedule/:scheduleId` (Role TEACHER)
+  - Purpose: teacher list for a schedule
+
+- PATCH `/attendance/:id/confirm` (Role TEACHER)
+  - Purpose: confirm attendance
+
+- PATCH `/attendance/:id/reject` (Role TEACHER) body: `{ reason: string }`
+  - Purpose: reject attendance and store rejection reason
+
+- GET `/attendance/export?session_id=<id>&type=csv` (Role TEACHER)
+  - Purpose: export CSV of attendances for the session
+  - Response: `text/csv` attachment. CSV columns: `attendance_id, student_npm, student_name, student_email, image_url, status, scanned_at, confirmed_by, confirmed_at`
 
 ---
 
-## Public Schedules
+## Schedules / QR flow (mobile)
 
 - GET `/public/schedules/verify/:qrCode`
-  - Description: Verify QR code for a schedule (used by mobile/web scanning)
+  - Purpose: mobile scans a QR -> call this endpoint to validate the QR and receive schedule info
   - Auth: none
-  - Params: `qrCode`
+  - Response: schedule object (id, courseName, date, startTime, endTime, status, qrCode)
+
+Mobile recommended flow
+1. Student scans QR -> extract `qrCode` token
+2. Call `GET /attendance/session/:sessionId` (or public verify) to confirm session is ACTIVE
+3. Capture selfie on device
+4a. Upload selfie to `/upload/photo` (optional) → get `url` and then call `/attendance/submit/mobile` with `imageUrl`
+4b. Or send `imageBase64` directly to `/attendance/submit/mobile`
+5. Student receives success response. Teacher will see PENDING in their dashboard until confirmation.
 
 ---
 
-## Student (Mobile)
+## Users / Profile
 
-- Intended Role: `STUDENT` (used by mobile apps)
-  - Notes: Student accounts are primarily used by the mobile application to submit attendance and view schedule verification. The backend currently accepts attendance submissions via a public endpoint (no role required), but the `STUDENT` role is included in the schema for future authenticated flows.
+- POST `/auth/register` (create student or teacher)
+- POST `/auth/login` (get JWT)
+- GET `/profile` (JWT) — get current user profile
 
-- POST `/auth/register`
-  - Description: Register a student account (optional when creating accounts via admin/teacher). Include `role: "STUDENT"` to create a student user.
-  - Body example: `{ "email": "student@example.com", "password": "studentpass", "role": "STUDENT" }`
-  - Auth: none
-
-- POST `/auth/login`
-  - Description: Login (returns JWT). Mobile apps should store the token and include `Authorization: Bearer <token>` for protected endpoints when implemented.
-
-- POST `/attendance/submit`
-  - Description: Submit attendance with selfie image. This endpoint is the main submission flow used by students (multipart/form-data: `selfie`, `scheduleId`, `studentName`, `studentNpm`).
-  - Auth: none (public submission), but clients may later switch to authenticated submissions using `STUDENT` JWT.
-
-- GET `/public/schedules/verify/:qrCode`
-  - Description: Verify a scanned QR code for a schedule (students use this to validate which schedule the QR belongs to before submitting attendance).
-  - Auth: none
+## CSV export notes
+- The export endpoint includes `student_email` column. If you want to include additional user fields (e.g., student user id) I can add them to the CSV.
 
 ---
 
----
-
-## Teachers
-Base path: `/teachers`
-
-- GET `/teachers/dashboard`
-  - Description: Teacher dashboard stats
-  - Auth: JWT, Role `TEACHER`
-
-- GET `/teachers/my-schedule`
-  - Description: Teacher's own schedules
-  - Auth: JWT, Role `TEACHER`
-
-- GET `/teachers/my-classes`
-  - Description: Classes assigned to teacher
-  - Auth: JWT, Role `TEACHER`
-
-- POST `/teachers`
-  - Description: Create teacher (restricted/privileged)
-  - Auth: check controller guards (may require `TEACHER` or privileged role)
-
-- GET `/teachers`
-  - Description: List teachers
-  - Auth: none declared at method level
-
-- GET `/teachers/:id`
-  - Description: Get teacher by id
-  - Auth: none declared at method level
-
-- PATCH `/teachers/:id`
-  - Description: Update teacher
-  - Auth: none declared at method level
-
-- DELETE `/teachers/:id`
-  - Description: Remove teacher (returns 204 on success)
-  - Auth: none declared at method level
+## Testing checklist for mobile integration
+- Register/login student → confirm JWT contains `email` claim
+- Scan QR → call `GET /attendance/session/:sessionId` and verify `valid: true`
+- Upload selfie to `/upload/photo` (optional) or prepare base64
+- POST `/attendance/submit/mobile` with JWT; verify returned attendance and that `studentEmail` is set in DB
+- GET `/attendance/history` with JWT; verify your submissions appear
+- Ask teacher to confirm one attendance and verify status change and that history shows `CONFIRMED`
 
 ---
 
-## Users (Restricted)
-Base path: `/users` (guarded by JWT + RolesGuard)
+If you want, I can:
+- Generate a Postman collection with these requests and example bodies for mobile testing.
+- Add a small "backfill" script to populate `studentEmail` for older rows by matching `studentNpm` to users (useful if you already have user records with NPM/email).
+- Add `studentEmail` into the frontend schedule detail UI and CSV export display if desired.
 
-- GET `/users`
-  - Description: Get all users
-  - Auth: JWT, Role `TEACHER`
-
-- GET `/users/:id`
-  - Description: Get user by id
-  - Auth: JWT, Role `TEACHER`
-
----
-
-## Profile
-Base path: `/profile` (JWT)
-
-- GET `/profile`
-  - Description: Get profile of authenticated user
-  - Auth: JWT
-
-- PUT `/profile`
-  - Description: Update profile of authenticated user
-  - Auth: JWT
-
----
-
-## Notes & Next Steps
-- This file is generated by scanning controller decorators. Some method-level guards, request/response DTOs and exact response shapes are defined in services and DTO files — consult `hadir_be/src/modules/*` for details on body schemas and validation.
-- If you want, I can:
-  - Expand this file with example request/response JSON for each endpoint (I can infer shapes from DTOs and services),
-  - Generate a Postman collection or OpenAPI spec based on the code,
-  - Create a smaller `API_OVERVIEW.md` or split per-module API files.
