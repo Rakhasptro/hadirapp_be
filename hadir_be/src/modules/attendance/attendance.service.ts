@@ -238,10 +238,18 @@ export class AttendanceService {
     return `/uploads/selfies/${filename}`;
   }
 
-  // Student-facing: list own attendances
-  async listAttendancesByStudent(studentId: string) {
+  // Student-facing: list own attendances. Accepts single id or array of possible identifiers
+  async listAttendancesByStudent(identifiers: string | string[]) {
+    const ids = Array.isArray(identifiers) ? identifiers.filter(Boolean) : [identifiers].filter(Boolean);
+    if (!ids.length) return [];
+
     return this.prisma.attendances.findMany({
-      where: { studentNpm: studentId },
+      where: {
+        OR: [
+          { studentNpm: { in: ids } },
+          { studentName: { in: ids } },
+        ],
+      },
       orderBy: { scannedAt: 'desc' },
     });
   }

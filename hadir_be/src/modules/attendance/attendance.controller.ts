@@ -77,9 +77,13 @@ export class AttendanceController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('STUDENT')
   async getHistory(@Req() req) {
-    const studentId = req.user?.sub || req.user?.userId;
-    if (!studentId) throw new BadRequestException('Unauthorized');
-    return this.attendanceService.listAttendancesByStudent(studentId);
+    const userId = req.user?.sub || req.user?.userId || null;
+    const email = req.user?.email || null;
+    if (!userId && !email) throw new BadRequestException('Unauthorized');
+
+    // try matching by user id and email and also by NPM if stored
+    const identifiers = [userId, email].filter(Boolean);
+    return this.attendanceService.listAttendancesByStudent(identifiers);
   }
 
   @Get('schedule/:scheduleId')
