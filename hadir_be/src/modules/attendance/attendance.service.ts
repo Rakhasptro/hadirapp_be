@@ -263,4 +263,31 @@ export class AttendanceService {
       orderBy: { scannedAt: 'desc' },
     });
   }
+
+  // Export attendances for a session as CSV
+  async exportAttendancesCsv(sessionIdOrQr: string) {
+    const schedule = await this.prisma.course_schedules.findFirst({
+      where: { OR: [{ id: sessionIdOrQr }, { qrCode: sessionIdOrQr }] },
+    });
+    if (!schedule) throw new NotFoundException('Session not found');
+
+    const attendances = await this.prisma.attendances.findMany({
+      where: { scheduleId: schedule.id },
+      orderBy: { scannedAt: 'asc' },
+    });
+
+    const header = ['attendance_id', 'student_npm', 'student_name', 'image_url', 'status', 'scanned_at', 'confirmed_by', 'confirmed_at'];
+    const rows = attendances.map(a => [
+      a.id,
+      a.studentNpm ?? '',
+      a.studentName ?? '',
+      a.selfieImage ?? '',
+      String(a.status ?? ''),
+      a.scannedAt ? a.scannedAt.toISOString() : (a.createdAt ? a.createdAt.toISOString() : ''),
+      a.confirmedBy ?? '',
+      a.confirmedAt ? a.confirmedAt.toISOString() : '',
+    ].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','));
+
+    return [header.join(','), ...rows].join('\n');
+  }
 }

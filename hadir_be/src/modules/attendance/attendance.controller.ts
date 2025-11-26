@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile, Req, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile, Req, BadRequestException, Query, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 import { AttendanceService } from './attendance.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -128,5 +129,23 @@ export class AttendanceController {
       throw new Error('Teacher ID not found');
     }
     return this.attendanceService.rejectAttendance(id, teacherId, reason);
+  }
+
+  @Get('export')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('TEACHER')
+  async exportCsv(@Query('session_id') sessionId: string, @Query('type') type: string, @Req() req, @Res() res: Response) {
+    if (!sessionId) {
+      return res.status(400).json({ message: 'session_id is required' });
+    }
+
+    try {
+      const csv = await this.attendanceService.exportAttendancesCsv(sessionId);
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="attendance_${sessionId}.csv"`);
+      return res.send(csv);
+    } catch (err) {
+      return res.status(404).json({ message: err?.message || 'Not found' });
+    }
   }
 }
