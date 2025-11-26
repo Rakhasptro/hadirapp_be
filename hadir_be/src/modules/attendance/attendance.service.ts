@@ -243,13 +243,23 @@ export class AttendanceService {
     const ids = Array.isArray(identifiers) ? identifiers.filter(Boolean) : [identifiers].filter(Boolean);
     if (!ids.length) return [];
 
+    // Build OR conditions for exact and partial (contains) matches
+    const orConditions: any[] = [];
+    for (const id of ids) {
+      orConditions.push({ studentNpm: { equals: id } });
+      orConditions.push({ studentName: { equals: id } });
+      orConditions.push({ studentNpm: { contains: id } });
+      orConditions.push({ studentName: { contains: id } });
+      // also try matching without domain part if this is an email
+      if (id.includes('@')) {
+        const local = id.split('@')[0];
+        orConditions.push({ studentNpm: { contains: local } });
+        orConditions.push({ studentName: { contains: local } });
+      }
+    }
+
     return this.prisma.attendances.findMany({
-      where: {
-        OR: [
-          { studentNpm: { in: ids } },
-          { studentName: { in: ids } },
-        ],
-      },
+      where: { OR: orConditions },
       orderBy: { scannedAt: 'desc' },
     });
   }
