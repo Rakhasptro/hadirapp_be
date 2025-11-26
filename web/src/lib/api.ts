@@ -214,10 +214,11 @@ export const attendanceService = {
 
   /**
    * Export attendance to CSV
-   * GET /api/attendance/export/csv/:scheduleId
+   * GET /api/attendance/export?session_id=...&type=csv
    */
   async exportToCSV(scheduleId: string): Promise<Blob> {
-    const response = await axios.get(`/attendance/export/csv/${scheduleId}`, {
+    const response = await axios.get(`/attendance/export`, {
+      params: { session_id: scheduleId, type: 'csv' },
       responseType: 'blob',
     });
     return response.data;
