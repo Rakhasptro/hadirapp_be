@@ -14,6 +14,7 @@ export class AttendanceService {
     studentName: string;
     studentNpm: string;
     selfieImage: string;
+    studentEmail?: string;
   }) {
     const schedule = await this.prisma.course_schedules.findUnique({
       where: { id: data.scheduleId },
@@ -43,6 +44,7 @@ export class AttendanceService {
         studentName: data.studentName,
         studentNpm: data.studentNpm,
         selfieImage: data.selfieImage,
+        studentEmail: data.studentEmail ?? null,
         status: attendances_status.PENDING,
       },
       include: {
@@ -179,6 +181,7 @@ export class AttendanceService {
     imageUrl?: string;
     imageBase64?: string;
     name?: string;
+    email?: string;
     timestamp?: string;
   }) {
     const schedule = await this.prisma.course_schedules.findFirst({
@@ -215,6 +218,7 @@ export class AttendanceService {
         studentName: data.name ?? data.studentId,
         studentNpm: data.studentId,
         selfieImage: finalImageUrl,
+        studentEmail: data.email ?? null,
         scannedAt: data.timestamp ? new Date(data.timestamp) : new Date(),
         status: attendances_status.PENDING,
       },
@@ -250,16 +254,28 @@ export class AttendanceService {
       orConditions.push({ studentName: { equals: id } });
       orConditions.push({ studentNpm: { contains: id } });
       orConditions.push({ studentName: { contains: id } });
+      orConditions.push({ studentEmail: { equals: id } });
+      orConditions.push({ studentEmail: { contains: id } });
       // also try matching without domain part if this is an email
       if (id.includes('@')) {
         const local = id.split('@')[0];
         orConditions.push({ studentNpm: { contains: local } });
         orConditions.push({ studentName: { contains: local } });
+        orConditions.push({ studentEmail: { contains: local } });
       }
     }
 
     return this.prisma.attendances.findMany({
       where: { OR: orConditions },
+      orderBy: { scannedAt: 'desc' },
+    });
+  }
+
+  // Prefer exact email lookup for student history when email is available
+  async listAttendancesByEmail(email: string) {
+    if (!email) return [];
+    return this.prisma.attendances.findMany({
+      where: { studentEmail: email },
       orderBy: { scannedAt: 'desc' },
     });
   }

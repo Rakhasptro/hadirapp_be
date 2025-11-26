@@ -44,6 +44,8 @@ export class AttendanceController {
       studentName: body.studentName,
       studentNpm: body.studentNpm,
       selfieImage: file.path,
+      // if the upload endpoint is used by an authenticated student, include their email
+      studentEmail: (body as any).studentEmail ?? undefined,
     });
   }
 
@@ -71,6 +73,7 @@ export class AttendanceController {
       imageBase64: body.imageBase64,
       name: body.name,
       timestamp: body.timestamp,
+      email: req.user?.email ?? (body as any).email ?? undefined,
     });
   }
 
@@ -82,8 +85,13 @@ export class AttendanceController {
     const email = req.user?.email || null;
     if (!userId && !email) throw new BadRequestException('Unauthorized');
 
-    // try matching by user id and email and also by NPM if stored
-    const identifiers = [userId, email].filter(Boolean);
+    // If email available, prefer exact email lookup to avoid broad partial matches
+    if (email) {
+      return this.attendanceService.listAttendancesByEmail(email);
+    }
+
+    // Fallback: try matching by user id and email local-part/other identifiers
+    const identifiers = [userId].filter(Boolean);
     return this.attendanceService.listAttendancesByStudent(identifiers);
   }
 

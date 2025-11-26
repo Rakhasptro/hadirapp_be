@@ -35,6 +35,7 @@ model attendances {
   scheduleId      String
   studentName     String // Input manual dari mahasiswa
   studentNpm      String // NPM mahasiswa (input manual)
+  studentEmail    String?            // Optional email of the student who submitted
   selfieImage     String // Path atau URL foto selfie
   status          attendances_status @default(PENDING)
   confirmedBy     String? // Teacher ID yang confirm
