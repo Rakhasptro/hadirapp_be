@@ -1,4 +1,4 @@
-# HadirApp - API Reference (mobile-focused)
+  # HadirApp - API Reference (mobile-focused)
 
 Base URL: `http://{HOST}:{PORT}/api` (adjust according to your deployment).
 

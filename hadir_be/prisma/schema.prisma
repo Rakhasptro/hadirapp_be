@@ -68,6 +68,17 @@ model teachers {
   course_schedules course_schedules[]
 }
 
+// Model untuk data khusus mahasiswa (student profile)
+model students {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  fullName  String
+  npm       String   @unique
+  createdAt DateTime @default(now())
+
+  user users @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model users {
   id        String     @id @default(uuid())
   email     String     @unique
@@ -77,6 +88,7 @@ model users {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   teachers  teachers?
+  students  students?
 }
 
 // Enums

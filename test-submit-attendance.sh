@@ -14,7 +14,7 @@ API_URL="http://localhost:3000/api"
 
 if [ -z "$1" ]; then
   echo -e "${RED}Error: Schedule ID required${NC}"
-  echo "Usage: ./test-submit-attendance.sh b4af0134-1e6e-47e4-a183-6a061ba64060"
+  echo "Usage: ./test-submit-attendance.sh cfbda9e2-bb3c-4b05-a079-fd15434864af"
   echo ""
   echo "Example:"
   echo "  ./test-submit-attendance.sh abc123-def456-ghi789"
