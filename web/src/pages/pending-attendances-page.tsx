@@ -140,11 +140,11 @@ export default function PendingAttendancesPage() {
   }
 
   return (
-    <div className="container max-w-7xl py-6">
+    <div className="container max-w-7xl py-4 px-3 md:py-6 md:px-4">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Kehadiran Perlu Validasi</h1>
-        <p className="text-muted-foreground mt-1">
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-xl md:text-3xl font-bold">Kehadiran Perlu Validasi</h1>
+        <p className="text-sm md:text-base text-muted-foreground mt-1">
           Total {filteredAttendances.length} kehadiran menunggu konfirmasi
         </p>
       </div>
@@ -188,17 +188,17 @@ export default function PendingAttendancesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {filteredAttendances.map((attendance) => (
             <Card key={attendance.id}>
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
+              <CardContent className="p-3 md:p-6">
+                <div className="flex items-start gap-3 md:gap-4">
                   {/* Selfie Image */}
                   <div className="flex-shrink-0">
                     <img
                       src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}${attendance.selfieImage}`}
                       alt={attendance.studentName}
-                      className="w-24 h-24 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                      className="w-16 h-16 md:w-24 md:h-24 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => setSelectedImage(`${import.meta.env.VITE_API_URL?.replace('/api', '')}${attendance.selfieImage}`)}
                     />
                   </div>
@@ -206,23 +206,23 @@ export default function PendingAttendancesPage() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-bold text-lg">{attendance.studentName}</h3>
-                        <p className="text-sm text-muted-foreground">{attendance.studentNpm}</p>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-base md:text-lg truncate">{attendance.studentName}</h3>
+                        <p className="text-xs md:text-sm text-muted-foreground">{attendance.studentNpm}</p>
                       </div>
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs ml-2 flex-shrink-0">
                         Pending
                       </Badge>
                     </div>
 
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{attendance.schedule?.courseName}</span>
-                        <span className="text-muted-foreground">({attendance.schedule?.courseCode})</span>
+                    <div className="space-y-1.5 md:space-y-2 mb-3 md:mb-4">
+                      <div className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
+                        <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="font-medium truncate">{attendance.schedule?.courseName}</span>
+                        <span className="text-muted-foreground flex-shrink-0">({attendance.schedule?.courseCode})</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
+                      <div className="flex items-start gap-1.5 md:gap-2 text-xs md:text-sm text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0 mt-0.5" />
                         <span>
                           Scan: {new Date(attendance.scannedAt).toLocaleDateString('id-ID', {
                             weekday: 'long',
@@ -238,25 +238,28 @@ export default function PendingAttendancesPage() {
                         </span>
                       </div>
                     </div>                    {/* Actions */}
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button
                         size="sm"
                         onClick={() => handleConfirm(attendance.id)}
+                        className="w-full sm:w-auto"
                       >
-                        <CheckCircle className="mr-2 h-4 w-4" />
+                        <CheckCircle className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
                         Konfirmasi
                       </Button>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleReject(attendance.id)}
+                        className="w-full sm:w-auto"
                       >
-                        <XCircle className="mr-2 h-4 w-4" />
+                        <XCircle className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
                         Tolak
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
+                        className="w-full sm:w-auto"
                         onClick={() => navigate(`/schedules/${attendance.scheduleId}`)}
                       >
                         <ExternalLink className="mr-2 h-4 w-4" />

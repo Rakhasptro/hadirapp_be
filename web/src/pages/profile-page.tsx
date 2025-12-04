@@ -328,12 +328,12 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className="container mx-auto p-3 md:p-6 max-w-4xl">
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-20 w-20">
+        <CardHeader className="p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-3 md:space-x-4">
+              <Avatar className="h-16 w-16 md:h-20 md:w-20">
                 {profile.role === 'TEACHER' && profile.profile?.photo ? (
                   <AvatarImage 
                     src={getPhotoUrl(profile.profile.photo) || undefined} 
@@ -344,29 +344,29 @@ export function ProfilePage() {
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <CardTitle className="text-2xl">
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-lg md:text-2xl truncate">
                   {profile.role === 'TEACHER' && profile.profile?.name 
                     ? profile.profile.name 
                     : profile.email}
                 </CardTitle>
-                <CardDescription className="flex items-center gap-2 mt-2">
-                  <Badge className={getRoleBadgeColor()}>
+                <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-2">
+                  <Badge className={getRoleBadgeColor() + " text-xs"}>
                     {getRoleLabel()}
                   </Badge>
                   {profile.role === 'TEACHER' && profile.profile?.nip && (
-                    <span className="text-sm text-muted-foreground">NIP: {profile.profile.nip}</span>
+                    <span className="text-xs md:text-sm text-muted-foreground">NIP: {profile.profile.nip}</span>
                   )}
                 </CardDescription>
               </div>
             </div>
             {!editing && (
-              <Button onClick={() => setEditing(true)}>Edit Profil</Button>
+              <Button onClick={() => setEditing(true)} className="w-full sm:w-auto">Edit Profil</Button>
             )}
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
           {editing ? (
             // Edit Mode
             <>
@@ -577,13 +577,13 @@ export function ProfilePage() {
             </>
           ) : (
             // View Mode
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               {/* Email Login */}
-              <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Email Login</p>
-                  <p className="text-base mt-1">{profile.email}</p>
+              <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 bg-muted/50 rounded-lg">
+                <Mail className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs md:text-sm font-medium text-muted-foreground">Email Login</p>
+                  <p className="text-sm md:text-base mt-1 break-all">{profile.email}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Email ini digunakan untuk login ke sistem
                   </p>
@@ -593,63 +593,63 @@ export function ProfilePage() {
               {profile.role === 'TEACHER' && profile.profile && (
                 <>
                   {/* Nama */}
-                  <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                    <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-muted-foreground">Nama Lengkap</p>
-                      <p className="text-base mt-1">{profile.profile.name}</p>
+                  <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 bg-muted/50 rounded-lg">
+                    <User className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-medium text-muted-foreground">Nama Lengkap</p>
+                      <p className="text-sm md:text-base mt-1">{profile.profile.name}</p>
                     </div>
                   </div>
 
                   {/* NIP */}
-                  <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                    <IdCard className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-muted-foreground">NIP</p>
-                      <p className="text-base mt-1">{profile.profile.nip}</p>
+                  <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 bg-muted/50 rounded-lg">
+                    <IdCard className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-medium text-muted-foreground">NIP</p>
+                      <p className="text-sm md:text-base mt-1">{profile.profile.nip}</p>
                     </div>
                   </div>
 
                   {/* Email Personal */}
-                  <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                    <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-muted-foreground">Email Personal</p>
-                      <p className="text-base mt-1">{profile.profile.email || '-'}</p>
+                  <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 bg-muted/50 rounded-lg">
+                    <Mail className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-medium text-muted-foreground">Email Personal</p>
+                      <p className="text-sm md:text-base mt-1 break-all">{profile.profile.email || '-'}</p>
                     </div>
                   </div>
 
                   {/* Gender */}
-                  <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                    <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-muted-foreground">Jenis Kelamin</p>
-                      <p className="text-base mt-1">{getGenderLabel(profile.profile.gender)}</p>
+                  <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 bg-muted/50 rounded-lg">
+                    <User className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-medium text-muted-foreground">Jenis Kelamin</p>
+                      <p className="text-sm md:text-base mt-1">{getGenderLabel(profile.profile.gender)}</p>
                     </div>
                   </div>
 
                   {/* Phone */}
-                  <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                    <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-muted-foreground">Telepon</p>
-                      <p className="text-base mt-1">{profile.profile.phone || '-'}</p>
+                  <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 bg-muted/50 rounded-lg">
+                    <Phone className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-medium text-muted-foreground">Telepon</p>
+                      <p className="text-sm md:text-base mt-1">{profile.profile.phone || '-'}</p>
                     </div>
                   </div>
 
                   {/* Address */}
-                  <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-muted-foreground">Alamat</p>
-                      <p className="text-base mt-1 whitespace-pre-line">{profile.profile.address || '-'}</p>
+                  <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 bg-muted/50 rounded-lg">
+                    <MapPin className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm font-medium text-muted-foreground">Alamat</p>
+                      <p className="text-sm md:text-base mt-1 whitespace-pre-line break-words">{profile.profile.address || '-'}</p>
                     </div>
                   </div>
                 </>
               )}
 
               {/* Role Info */}
-              <div className="p-4 bg-muted/50 rounded-lg border-l-4 border-primary">
+              <div className="p-3 md:p-4 bg-muted/50 rounded-lg border-l-4 border-primary">
                 <div className="flex items-center gap-2 mb-2">
                   <Badge className={getRoleBadgeColor()}>
                     {getRoleLabel()}

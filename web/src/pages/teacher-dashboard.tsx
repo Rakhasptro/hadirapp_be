@@ -161,52 +161,56 @@ export default function TeacherDashboard() {
       {/* Pending Attendances */}
       {pendingAttendances.length > 0 && (
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <CardTitle>Kehadiran Perlu Validasi</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
+                <CardTitle className="text-lg md:text-xl">Kehadiran Perlu Validasi</CardTitle>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1">
                   Mahasiswa yang baru scan QR dan menunggu konfirmasi
                 </p>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate('/attendance/pending')}>
+              <Button variant="outline" size="sm" onClick={() => navigate('/attendance/pending')} className="w-full sm:w-auto">
                 Lihat Semua
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="px-3 md:px-6">
+            <div className="space-y-3">
               {pendingAttendances.map((attendance) => (
                 <div 
                   key={attendance.id}
-                  className="flex items-center gap-4 p-4 border rounded-lg hover:shadow-md transition-shadow"
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 border rounded-lg hover:shadow-md transition-shadow"
                 >
-                  <img
-                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}${attendance.selfieImage}`}
-                    alt={attendance.studentName}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-semibold">{attendance.studentName}</h4>
-                    <p className="text-sm text-muted-foreground">{attendance.studentNpm}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {attendance.schedule?.courseName} • {new Date(attendance.scannedAt).toLocaleTimeString('id-ID')}
-                    </p>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <img
+                      src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}${attendance.selfieImage}`}
+                      alt={attendance.studentName}
+                      className="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-sm md:text-base truncate">{attendance.studentName}</h4>
+                      <p className="text-xs md:text-sm text-muted-foreground">{attendance.studentNpm}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {attendance.schedule?.courseName} • {new Date(attendance.scannedAt).toLocaleTimeString('id-ID')}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                       size="sm"
                       onClick={() => handleQuickConfirm(attendance.id)}
+                      className="flex-1 sm:flex-none"
                     >
-                      <CheckCircle className="mr-2 h-3 w-3" />
-                      Konfirmasi
+                      <CheckCircle className="mr-1 md:mr-2 h-3 w-3" />
+                      <span className="text-xs md:text-sm">Konfirmasi</span>
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => navigate(`/schedules/${attendance.scheduleId}`)}
+                      className="flex-1 sm:flex-none"
                     >
-                      Detail
+                      <span className="text-xs md:text-sm">Detail</span>
                     </Button>
                   </div>
                 </div>
