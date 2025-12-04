@@ -63,16 +63,16 @@ export default function SchedulesListPage() {
   };
 
   return (
-    <div className="container max-w-7xl py-6">
+    <div className="container max-w-7xl py-4 px-3 md:py-6 md:px-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-6 gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Jadwal Perkuliahan</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-xl md:text-3xl font-bold">Jadwal Perkuliahan</h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-1">
             Kelola jadwal dan QR Code absensi
           </p>
         </div>
-        <Button onClick={() => navigate('/schedules/create')}>
+        <Button onClick={() => navigate('/schedules/create')} className="w-full sm:w-auto" size="sm">
           <Plus className="mr-2 h-4 w-4" />
           Buat Jadwal Baru
         </Button>
