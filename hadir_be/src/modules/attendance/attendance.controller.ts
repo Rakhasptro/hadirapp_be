@@ -39,11 +39,15 @@ export class AttendanceController {
       throw new BadRequestException('Selfie image is required');
     }
 
+    // Normalize public URL path for stored file so frontend can load it via /uploads/
+    // Multer's `file.filename` contains the generated filename.
+    const publicPath = `/uploads/selfies/${(file as any).filename}`;
+
     return this.attendanceService.submitAttendance({
       scheduleId: body.scheduleId,
       studentName: body.studentName,
       studentNpm: body.studentNpm,
-      selfieImage: file.path,
+      selfieImage: publicPath,
       // if the upload endpoint is used by an authenticated student, include their email
       studentEmail: (body as any).studentEmail ?? undefined,
     });

@@ -385,7 +385,7 @@ export default function ScheduleDetailPage() {
                   >
                     {/* Selfie */}
                     <img
-                      src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${attendance.selfieImage}`}
+                      src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}${attendance.selfieImage}`}
                       alt={attendance.studentName}
                       className="w-20 h-20 sm:w-16 sm:h-16 rounded-lg object-cover mb-2 sm:mb-0"
                     />

@@ -196,10 +196,10 @@ export default function PendingAttendancesPage() {
                   {/* Selfie Image */}
                   <div className="flex-shrink-0">
                     <img
-                      src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${attendance.selfieImage}`}
+                      src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}${attendance.selfieImage}`}
                       alt={attendance.studentName}
                       className="w-24 h-24 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => setSelectedImage(`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${attendance.selfieImage}`)}
+                      onClick={() => setSelectedImage(`${import.meta.env.VITE_API_URL?.replace('/api', '')}${attendance.selfieImage}`)}
                     />
                   </div>
 

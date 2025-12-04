@@ -182,7 +182,7 @@ export default function TeacherDashboard() {
                   className="flex items-center gap-4 p-4 border rounded-lg hover:shadow-md transition-shadow"
                 >
                   <img
-                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/${attendance.selfieImage}`}
+                    src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}${attendance.selfieImage}`}
                     alt={attendance.studentName}
                     className="w-12 h-12 rounded-full object-cover"
                   />
