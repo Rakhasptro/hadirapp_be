@@ -42,11 +42,13 @@ Endpoints mobile app should use
   - Purpose: legacy web/file-upload flow. Use `selfie` file upload.
   - Body (form-data): `selfie` (file), `scheduleId`, `studentName`, `studentNpm`, optional `studentEmail`
   - Auth: none (public submission)
-  - Response: created attendance object
+  - **Validation**: Schedule must have status `ACTIVE`. Returns 400 Bad Request if schedule is SCHEDULED or CLOSED.
+  - Response: created attendance object or 400 error
 
 - POST `/attendance/submit/mobile` (JSON) — recommended for mobile
   - Purpose: mobile-friendly JSON submission (base64 or remote URL)
   - Auth: recommended: JWT (Role STUDENT) — controller reads `req.user.email` and uses it as `studentEmail` when present
+  - **Validation**: Schedule must have status `ACTIVE`. Returns 400 Bad Request if schedule is SCHEDULED or CLOSED.
   - Body JSON examples (two variants):
     1) using uploaded URL
     {
@@ -101,6 +103,8 @@ Teacher endpoints (dashboard)
 Mobile recommended flow
 1. Student scans QR -> extract `qrCode` token
 2. Call `GET /attendance/session/:sessionId` (or public verify) to confirm session is ACTIVE
+   - **Important**: Check `isActive: true` in response before showing attendance form
+   - If `isActive: false`, display message "Absensi belum dibuka" or "Absensi sudah ditutup"
 3. Capture selfie on device
 4a. Upload selfie to `/upload/photo` (optional) → get `url` and then call `/attendance/submit/mobile` with `imageUrl`
 4b. Or send `imageBase64` directly to `/attendance/submit/mobile`

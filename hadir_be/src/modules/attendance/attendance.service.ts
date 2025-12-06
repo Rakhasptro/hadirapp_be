@@ -24,6 +24,11 @@ export class AttendanceService {
       throw new NotFoundException('Schedule not found');
     }
 
+    // Validate schedule is ACTIVE before allowing attendance submission
+    if (schedule.status !== 'ACTIVE') {
+      throw new BadRequestException('Attendance is not open yet. Schedule must be activated by teacher first.');
+    }
+
     const existing = await this.prisma.attendances.findUnique({
       where: {
         scheduleId_studentNpm: {
@@ -190,6 +195,11 @@ export class AttendanceService {
 
     if (!schedule) {
       throw new NotFoundException('Session not found');
+    }
+
+    // Validate schedule is ACTIVE before allowing attendance submission
+    if (schedule.status !== 'ACTIVE') {
+      throw new BadRequestException('Attendance is not open yet. Schedule must be activated by teacher first.');
     }
 
     // prevent duplicate by (scheduleId, studentNpm)
