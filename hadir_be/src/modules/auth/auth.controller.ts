@@ -29,6 +29,28 @@ class LoginDto {
   password: string;
 }
 
+class ResetPasswordDto {
+  @ApiProperty({ example: 'teacher@example.com', description: 'Email for teacher or NPM for student', required: false })
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiProperty({ example: '123456789', description: 'NPM for student', required: false })
+  @IsOptional()
+  @IsString()
+  npm?: string;
+
+  @ApiProperty({ example: 'newPassword123', description: 'New password' })
+  @IsString()
+  @MinLength(6)
+  newPassword: string;
+
+  @ApiProperty({ example: 'newPassword123', description: 'Confirm new password' })
+  @IsString()
+  @MinLength(6)
+  confirmPassword: string;
+}
+
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -59,5 +81,25 @@ export class AuthController {
       }
       throw error;
     }
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password for teacher (using email) or student (using NPM)' })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({ status: 200, description: 'Password reset successful' })
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    if (!body?.email && !body?.npm) {
+      throw new BadRequestException('Email (untuk teacher) atau NPM (untuk student) harus diisi');
+    }
+
+    if (!body?.newPassword || !body?.confirmPassword) {
+      throw new BadRequestException('Password baru dan konfirmasi password harus diisi');
+    }
+
+    if (body.newPassword !== body.confirmPassword) {
+      throw new BadRequestException('Password baru dan konfirmasi password tidak sama');
+    }
+
+    return this.authService.resetPassword(body.email, body.npm, body.newPassword);
   }
 }

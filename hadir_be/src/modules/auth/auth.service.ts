@@ -88,4 +88,65 @@ export class AuthService {
       },
     };
   }
+
+  async resetPassword(email?: string, npm?: string, newPassword?: string) {
+    if (!email && !npm) {
+      throw new BadRequestException('Email atau NPM harus diisi');
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      throw new BadRequestException('Password baru minimal 6 karakter');
+    }
+
+    let userId: string | null = null;
+
+    // Reset by email (for teacher)
+    if (email) {
+      const teacher = await this.prisma.teachers.findFirst({
+        where: { email },
+        include: { users: true },
+      });
+
+      if (!teacher) {
+        throw new BadRequestException('Email tidak terdaftar sebagai teacher');
+      }
+
+      userId = teacher.users.id;
+    }
+
+    // Reset by NPM (for student)
+    if (npm && !userId) {
+      const student = await this.prisma.students.findUnique({
+        where: { npm },
+        include: { user: true },
+      });
+
+      if (!student) {
+        throw new BadRequestException('NPM tidak terdaftar sebagai student');
+      }
+
+      userId = student.user.id;
+    }
+
+    if (!userId) {
+      throw new BadRequestException('User tidak ditemukan');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await this.prisma.users.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+        updatedAt: new Date(),
+      },
+    });
+
+    return {
+      message: 'Password berhasil direset',
+      success: true,
+    };
+  }
 }

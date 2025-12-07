@@ -35,9 +35,9 @@ export function ForgotPasswordForm({ onSwitchToLogin }: ForgotPasswordFormProps)
     }
     setLoading(true);
     try {
-      await authService.resetPassword({ email, newPassword });
+      const result = await authService.resetPassword({ email, newPassword, confirmPassword });
       setSuccess(true);
-      toast.success('Password berhasil diubah! Silakan login dengan password baru.');
+      toast.success(result.message || 'Password berhasil diubah! Silakan login dengan password baru.');
       setTimeout(() => {
         onSwitchToLogin();
       }, 2000);

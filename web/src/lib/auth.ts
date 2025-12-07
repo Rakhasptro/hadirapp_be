@@ -40,9 +40,8 @@ export const authService = {
     return response.data;
   },
 
-  async resetPassword(data: { email: string; newPassword: string }): Promise<unknown> {
-    // Endpoint backend yang harus disediakan: /auth/reset-password
-    const response = await axios.post('/auth/reset-password', data);
+  async resetPassword(data: { email: string; newPassword: string; confirmPassword: string }): Promise<{ message: string; success: boolean }> {
+    const response = await axios.post<{ message: string; success: boolean }>('/auth/reset-password', data);
     return response.data;
   },
 
