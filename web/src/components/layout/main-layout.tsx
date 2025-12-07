@@ -82,7 +82,7 @@ export function MainLayout() {
   const getPhotoUrl = (photo: string | null) => {
     if (!photo) return null
     if (photo.startsWith('http')) return photo
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+    const baseURL = import.meta.env.VITE_API_URL
     const apiBaseURL = baseURL.replace('/api', '')
     return `${apiBaseURL}${photo}`
   }
@@ -247,14 +247,7 @@ export function MainLayout() {
                     <User className="mr-2 h-4 w-4" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Bell className="mr-2 h-4 w-4" />
-                    Notifications
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </DropdownMenuItem>
+                  {/* Notifications and Settings removed per request */}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />

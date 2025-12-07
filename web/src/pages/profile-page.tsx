@@ -70,7 +70,7 @@ export function ProfilePage() {
   const getPhotoUrl = (photo: string | null) => {
     if (!photo) return null
     if (photo.startsWith('http')) return photo
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+    const baseURL = import.meta.env.VITE_API_URL 
     const apiBaseURL = baseURL.replace('/api', '')
     return `${apiBaseURL}${photo}`
   }
