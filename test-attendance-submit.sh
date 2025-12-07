@@ -3,7 +3,7 @@
 # Test Submit Attendance with Multipart Form Data
 # Ganti SCHEDULE_ID dengan ID dari schedule yang sudah dibuat
 
-SCHEDULE_ID="cfbda9e2-bb3c-4b05-a079-fd15434864af"
+SCHEDULE_ID="c7699d0d-ec36-4eee-873f-9a8639e0fd99"
 API_URL="http://localhost:3000/api"
 
 echo "=== Test Submit Attendance ==="

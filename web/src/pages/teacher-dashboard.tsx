@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Calendar,
-  Users,
   CheckCircle,
   Clock,
   
@@ -20,6 +19,9 @@ export default function TeacherDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const user = authService.getUser();
+  const displayName = typeof user?.profile?.name === 'string'
+    ? user.profile.name
+    : (typeof user?.email === 'string' ? user.email : 'User');
   
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -84,7 +86,7 @@ export default function TeacherDashboard() {
     <div className="container max-w-7xl py-6">
       {/* Welcome */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Selamat Datang, {user?.profile?.name || user?.email}!</h1>
+        <h1 className="text-3xl font-bold">Selamat Datang, {displayName}!</h1>
         <p className="text-muted-foreground mt-1">
           Kelola jadwal dan validasi kehadiran mahasiswa
         </p>
@@ -118,18 +120,7 @@ export default function TeacherDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Kehadiran</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalAttendances}</div>
-            <p className="text-xs text-muted-foreground">
-              Mahasiswa sudah absen
-            </p>
-          </CardContent>
-        </Card>
+        {/* Total Kehadiran card removed per request */}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
