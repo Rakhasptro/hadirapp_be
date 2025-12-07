@@ -74,7 +74,31 @@ Endpoints mobile app should use
   - Purpose: return authenticated student's attendance history (their own records)
   - Auth: JWT required (Role STUDENT)
   - Behavior: when JWT contains `email`, the endpoint does an exact lookup by `studentEmail` to reliably return only the student's records. If email is not present it falls back to identifier matching by `studentNpm`/name.
-  - Response: array of attendance objects (id, scheduleId, studentName, studentNpm, studentEmail, selfieImage, status, scannedAt, confirmedAt...)
+  - Response: array of attendance objects with schedule details
+    ```json
+    [
+      {
+        "id": "...",
+        "scheduleId": "...",
+        "studentName": "Rakha adi saputro",
+        "studentNpm": "202310715083",
+        "studentEmail": "student@example.com",
+        "selfieImage": "/uploads/selfies/...",
+        "status": "CONFIRMED",
+        "scannedAt": "2025-12-07T10:00:00Z",
+        "schedule": {
+          "id": "...",
+          "courseName": "Keamanan Siber",
+          "courseCode": "F5A8",
+          "date": "2025-12-07",
+          "startTime": "10:00",
+          "endTime": "12:00",
+          "room": "55-405",
+          "status": "ACTIVE"
+        }
+      }
+    ]
+    ```
 
 Teacher endpoints (dashboard)
 

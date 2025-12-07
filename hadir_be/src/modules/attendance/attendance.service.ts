@@ -277,6 +277,20 @@ export class AttendanceService {
 
     return this.prisma.attendances.findMany({
       where: { OR: orConditions },
+      include: {
+        schedule: {
+          select: {
+            id: true,
+            courseName: true,
+            courseCode: true,
+            date: true,
+            startTime: true,
+            endTime: true,
+            room: true,
+            status: true,
+          },
+        },
+      },
       orderBy: { scannedAt: 'desc' },
     });
   }
@@ -286,6 +300,20 @@ export class AttendanceService {
     if (!email) return [];
     return this.prisma.attendances.findMany({
       where: { studentEmail: email },
+      include: {
+        schedule: {
+          select: {
+            id: true,
+            courseName: true,
+            courseCode: true,
+            date: true,
+            startTime: true,
+            endTime: true,
+            room: true,
+            status: true,
+          },
+        },
+      },
       orderBy: { scannedAt: 'desc' },
     });
   }
