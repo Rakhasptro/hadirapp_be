@@ -32,9 +32,7 @@ import {
   ChevronRight,
   ChevronsUpDown,
   User,
-  Bell,
   LogOut,
-  Settings,
   LayoutDashboard,
   CalendarCheck,
   GraduationCap,
@@ -60,9 +58,10 @@ export function MainLayout() {
     const reloadUser = async () => {
       try {
         const fresh = await teacherService.getProfile()
-        if (fresh) {
-          setUser(fresh)
-          localStorage.setItem('user', JSON.stringify(fresh))
+        if (fresh && user) {
+          const updatedUser = { ...user, profile: fresh as unknown as Record<string, unknown> }
+          setUser(updatedUser)
+          localStorage.setItem('user', JSON.stringify(updatedUser))
         }
       } catch (error) {
         // keep console error for visibility when debugging
@@ -72,7 +71,7 @@ export function MainLayout() {
 
     window.addEventListener('profileUpdated', reloadUser)
     return () => window.removeEventListener('profileUpdated', reloadUser)
-  }, [])
+  }, [user])
 
   const handleLogout = () => {
     authService.logout()
