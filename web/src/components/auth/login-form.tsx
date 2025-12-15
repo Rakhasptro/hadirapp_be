@@ -22,6 +22,7 @@ interface LoginFormProps {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showError, setShowError] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -46,6 +47,7 @@ interface LoginFormProps {
       clearTimeout(errorTimeoutRef.current);
       errorTimeoutRef.current = null;
     }
+    setShowError(false);
     setError(null);
 
     try {
@@ -61,13 +63,16 @@ interface LoginFormProps {
       type RespErr = { response?: { data?: { message?: string; error?: string } }; message?: string }
       const e = err as RespErr
       const errorMessage = e.response?.data?.message || e.response?.data?.error || e.message || 'Login failed. Please check your credentials.'
-      setError(errorMessage)
       
-      // Auto-dismiss error after 3 seconds with cleanup
+      // Set error immediately
+      setError(errorMessage);
+      setShowError(true);
+      
+      // Auto-dismiss error after 5 seconds (increased from 3 to 5)
       errorTimeoutRef.current = setTimeout(() => {
-        setError(null);
+        setShowError(false);
         errorTimeoutRef.current = null;
-      }, 3000);
+      }, 5000);
     } finally {
       setIsLoading(false);
     }
@@ -93,8 +98,8 @@ interface LoginFormProps {
                   Login ke HadirApp - Sistem Presensi QR
                 </p>
               </div>
-              {error && (
-                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+              {showError && error && (
+                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md mb-4 animate-in fade-in duration-300">
                   {error}
                 </div>
               )}
