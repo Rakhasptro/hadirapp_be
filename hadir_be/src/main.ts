@@ -9,10 +9,10 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   
   // Enable CORS for frontend
-  app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
-    credentials: true,
-  });
+app.enableCors({
+  origin: true,
+  credentials: true,
+});
 
   // Serve static files from uploads folder
   // In development: HadirAPP/uploads
