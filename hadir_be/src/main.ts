@@ -10,7 +10,12 @@ async function bootstrap() {
   
   // Enable CORS for frontend
 app.enableCors({
-  origin: true,
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://dashboard.giyuu.online',
+    'https://dashboard-hadirapp.giyuu.online',
+  ],
   credentials: true,
 });
 

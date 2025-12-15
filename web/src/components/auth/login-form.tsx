@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -26,10 +26,26 @@ interface LoginFormProps {
     email: '',
     password: '',
   });
+  const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    // Clear any existing error timeout
+    if (errorTimeoutRef.current) {
+      clearTimeout(errorTimeoutRef.current);
+      errorTimeoutRef.current = null;
+    }
     setError(null);
 
     try {
@@ -47,9 +63,10 @@ interface LoginFormProps {
       const errorMessage = e.response?.data?.message || e.response?.data?.error || e.message || 'Login failed. Please check your credentials.'
       setError(errorMessage)
       
-      // Auto-dismiss error after 3 seconds
-      setTimeout(() => {
+      // Auto-dismiss error after 3 seconds with cleanup
+      errorTimeoutRef.current = setTimeout(() => {
         setError(null);
+        errorTimeoutRef.current = null;
       }, 3000);
     } finally {
       setIsLoading(false);
