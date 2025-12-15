@@ -46,6 +46,11 @@ interface LoginFormProps {
       const e = err as RespErr
       const errorMessage = e.response?.data?.message || e.response?.data?.error || e.message || 'Login failed. Please check your credentials.'
       setError(errorMessage)
+      
+      // Auto-dismiss error after 3 seconds
+      setTimeout(() => {
+        setError(null);
+      }, 3000);
     } finally {
       setIsLoading(false);
     }
