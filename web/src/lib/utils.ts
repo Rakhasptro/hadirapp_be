@@ -13,9 +13,21 @@ export function getImageUrl(imagePath: string): string {
     return imagePath;
   }
   
-  // Get base URL from env, default to localhost
+  // Get API URL from env
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-  const baseUrl = apiUrl.replace('/api', '');
+  
+  // Extract base URL properly
+  // Example: https://api.giyuu.online/api -> https://api.giyuu.online
+  let baseUrl: string;
+  try {
+    const url = new URL(apiUrl);
+    // Remove /api path if present
+    const pathname = url.pathname.replace('/api', '');
+    baseUrl = `${url.protocol}//${url.host}${pathname}`;
+  } catch {
+    // Fallback for invalid URLs
+    baseUrl = apiUrl.replace(/\/api\/?$/, '');
+  }
   
   // Ensure imagePath starts with /
   const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
