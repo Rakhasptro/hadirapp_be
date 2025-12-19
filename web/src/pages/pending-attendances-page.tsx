@@ -21,6 +21,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { attendanceService, Attendance } from '@/lib/api';
+import { getImageUrl } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -196,10 +197,13 @@ export default function PendingAttendancesPage() {
                   {/* Selfie Image */}
                   <div className="flex-shrink-0">
                     <img
-                      src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}${attendance.selfieImage}`}
+                      src={getImageUrl(attendance.selfieImage)}
                       alt={attendance.studentName}
-                      className="w-16 h-16 md:w-24 md:h-24 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => setSelectedImage(`${import.meta.env.VITE_API_URL?.replace('/api', '')}${attendance.selfieImage}`)}
+                      className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                      onClick={() => setSelectedImage(getImageUrl(attendance.selfieImage))}
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="14"%3ENo Image%3C/text%3E%3C/svg%3E';
+                      }}
                     />
                   </div>
 

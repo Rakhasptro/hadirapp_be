@@ -14,6 +14,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { teacherService, attendanceService, Attendance } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/lib/auth';
+import { getImageUrl } from '@/lib/utils';
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
@@ -174,9 +175,12 @@ export default function TeacherDashboard() {
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <img
-                      src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}${attendance.selfieImage}`}
+                      src={getImageUrl(attendance.selfieImage)}
                       alt={attendance.studentName}
                       className="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover flex-shrink-0"
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="14"%3ENo Image%3C/text%3E%3C/svg%3E';
+                      }}
                     />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-sm md:text-base truncate">{attendance.studentName}</h4>
