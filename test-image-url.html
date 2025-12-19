@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Image URL - HadirApp</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        img {
+            max-width: 200px;
+            margin: 10px;
+            border: 2px solid #ccc;
+        }
+        .url-info {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🖼️ Test Image URL - HadirApp</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Direct Backend URL</h2>
+        <p>URL: <span class="url-info">https://api.giyuu.online/uploads/selfies/selfie-52e7e8d4-1cd5-4ac1-90e6-23cd1732f3ce.jpeg</span></p>
+        <img 
+            src="https://api.giyuu.online/uploads/selfies/selfie-52e7e8d4-1cd5-4ac1-90e6-23cd1732f3ce.jpeg" 
+            alt="Test Direct"
+            onload="document.getElementById('status1').textContent = '✅ Image loaded successfully!'; document.getElementById('status1').className = 'status success';"
+            onerror="document.getElementById('status1').textContent = '❌ Failed to load image'; document.getElementById('status1').className = 'status error';"
+        >
+        <div id="status1" class="status">Loading...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: With getImageUrl() Logic</h2>
+        <p>Input path: <span class="url-info">/uploads/selfies/selfie-52e7e8d4-1cd5-4ac1-90e6-23cd1732f3ce.jpeg</span></p>
+        <p>Generated URL: <span class="url-info" id="generatedUrl"></span></p>
+        <img 
+            id="img2"
+            alt="Test Generated"
+            onload="document.getElementById('status2').textContent = '✅ Image loaded successfully!'; document.getElementById('status2').className = 'status success';"
+            onerror="document.getElementById('status2').textContent = '❌ Failed to load image'; document.getElementById('status2').className = 'status error';"
+        >
+        <div id="status2" class="status">Loading...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: CORS Check</h2>
+        <button onclick="testCORS()">Test CORS Request</button>
+        <div id="corsResult" style="margin-top: 10px;"></div>
+    </div>
+
+    <script>
+        // Simulate getImageUrl function from frontend
+        function getImageUrl(imagePath) {
+            if (!imagePath) return '';
+            
+            if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+                return imagePath;
+            }
+            
+            // Get base URL - in production should be https://api.giyuu.online
+            const apiUrl = 'https://api.giyuu.online/api';
+            const baseUrl = apiUrl.replace('/api', '');
+            
+            const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+            
+            return `${baseUrl}${path}`;
+        }
+
+        // Test getImageUrl function
+        const testPath = '/uploads/selfies/selfie-52e7e8d4-1cd5-4ac1-90e6-23cd1732f3ce.jpeg';
+        const generatedUrl = getImageUrl(testPath);
+        document.getElementById('generatedUrl').textContent = generatedUrl;
+        document.getElementById('img2').src = generatedUrl;
+
+        // Test CORS
+        async function testCORS() {
+            const resultDiv = document.getElementById('corsResult');
+            resultDiv.innerHTML = '<p>Testing CORS...</p>';
+            
+            try {
+                const response = await fetch('https://api.giyuu.online/api/attendance/pending', {
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    }
+                });
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div class="status success">✅ CORS working! Status: ' + response.status + '</div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="status error">⚠️ Request returned status: ' + response.status + '</div>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="status error">❌ CORS Error: ' + error.message + '</div>';
+            }
+        }
+
+        // Log to console for debugging
+        console.log('=== Image URL Test ===');
+        console.log('Original path from DB:', testPath);
+        console.log('Generated URL:', generatedUrl);
+        console.log('Expected URL:', 'https://api.giyuu.online/uploads/selfies/selfie-52e7e8d4-1cd5-4ac1-90e6-23cd1732f3ce.jpeg');
+    </script>
+</body>
+</html>
